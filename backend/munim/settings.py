@@ -140,9 +140,9 @@ OPENAI_API_KEY = env("OPENAI_API_KEY")
 # --- Speech -------------------------------------------------------------------
 SPEECH_PROVIDER = env("SPEECH_PROVIDER", "sarvam")  # sarvam | openai | prerecorded
 SARVAM_API_KEY = env("SARVAM_API_KEY")
-SARVAM_STT_MODEL = env("SARVAM_STT_MODEL", "saarika:v2.5")
-SARVAM_TTS_MODEL = env("SARVAM_TTS_MODEL", "bulbul:v2")
-SARVAM_TTS_SPEAKER = env("SARVAM_TTS_SPEAKER", "anushka")
+SARVAM_STT_MODEL = env("SARVAM_STT_MODEL", "saaras:v3")
+SARVAM_TTS_MODEL = env("SARVAM_TTS_MODEL", "bulbul:v3")
+SARVAM_TTS_SPEAKER = env("SARVAM_TTS_SPEAKER", "ritu")
 
 LOGGING = {
     "version": 1,
