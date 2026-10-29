@@ -291,6 +291,26 @@ class AuthAndTenancyTests(TestCase):
         self.assertEqual(fake.chat.completions.create.call_count, 2, "no new model calls while the breaker is open")
         llm._down_until = 0.0  # close the breaker for the other tests
 
+    def test_deployment_helpers(self):
+        import os
+        from unittest import mock
+
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        from munim.settings import env
+
+        # health check: no login, touches the database
+        self.assertEqual(APIClient().get("/api/health").json(), {"ok": True})
+        # the read-only role can be (re)created from READONLY_DATABASE_URL on a host with no init script
+        call_command("ensure_readonly_role", verbosity=0)
+        # seed_demo refuses to wipe a database when DEMO_MODE is off
+        with override_settings(DEMO_MODE=False), self.assertRaises(CommandError):
+            call_command("seed_demo", verbosity=0)
+        # a '#' inside a password survives; a trailing " # comment" is stripped
+        with mock.patch.dict(os.environ, {"T_PW": "ab#cd", "T_C": "value   # a comment"}):
+            self.assertEqual((env("T_PW"), env("T_C")), ("ab#cd", "value"))
+
     def test_language_preference_changes_answers_and_briefing(self):
         with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=Path(tmp)):
             client = login(LAKSHMI)

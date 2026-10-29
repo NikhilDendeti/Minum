@@ -64,6 +64,18 @@ def _ms(t0):
     return int((time.time() - t0) * 1000)
 
 
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def health(request):
+    """For the hosting platform's health check: the process is up and the database answers."""
+    from django.db import connection
+
+    with connection.cursor() as cur:
+        cur.execute("SELECT 1")
+    return Response({"ok": True})
+
+
 # --- auth (no session needed) ---------------------------------------------------------------------------------------
 
 @api_view(["GET"])

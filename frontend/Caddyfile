@@ -1,0 +1,27 @@
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT:8080} {
+	encode gzip
+
+	# API and audio go to the backend. Railway's edge always speaks https to the browser, and Django needs to know.
+	handle /api/* {
+		reverse_proxy {$BACKEND_URL} {
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /media/* {
+		reverse_proxy {$BACKEND_URL} {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# everything else is the single-page app
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,8 +1,10 @@
 import os
+import re
 from datetime import date
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,8 +14,8 @@ load_dotenv(REPO_ROOT / ".env")
 
 def env(name, default=""):
     value = os.environ.get(name, default)
-    # allow trailing "# comment" in .env values copied from .env.example
-    return value.split("#", 1)[0].strip() if isinstance(value, str) else value
+    # allow a trailing " # comment" (as in .env.example); a '#' inside a password or key is kept
+    return re.split(r"\s+#", value, maxsplit=1)[0].strip() if isinstance(value, str) else value
 
 
 def env_bool(name, default=False):
@@ -33,10 +35,15 @@ def db_from_url(url):
     }
 
 
+DEBUG = env_bool("DEBUG", False)  # off unless explicitly enabled (.env.example turns it on for local work)
 SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-only-secret")
-DEBUG = env_bool("DEBUG", True)
-DEMO_MODE = env_bool("DEMO_MODE", True)
-ALLOWED_HOSTS = ["*"]
+if not DEBUG and SECRET_KEY in ("", "dev-only-secret", "change-me"):
+    raise ImproperlyConfigured("Set DJANGO_SECRET_KEY to a long random value when DEBUG is off.")
+DEMO_MODE = env_bool("DEMO_MODE", False)
+# Local work accepts any host; in production list them (the private ".railway.internal" name is always allowed
+# so the frontend's proxy can reach the backend).
+ALLOWED_HOSTS = ["*"] if DEBUG else [h.strip() for h in
+                                     env("ALLOWED_HOSTS", "").split(",") if h.strip()] + [".railway.internal", "localhost", "127.0.0.1"]
 
 # --- demo constants: change in one place -------------------------------------
 DEMO_TODAY = date.fromisoformat(env("DEMO_TODAY", "2026-11-12"))
@@ -74,6 +81,8 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SAMESITE = "Lax"
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # trust the proxy: the browser spoke https
 OTP_TTL_S = 300
 OTP_MAX_ATTEMPTS = 5
 OTP_MAX_REQUESTS = 5  # codes per phone per 10 minutes
@@ -92,6 +101,7 @@ DATABASES = {
 DATABASE_ROUTERS = ["munim.routers.ReadonlyRouter"]
 READONLY_ALIAS = "readonly"  # tests override this to "default"
 READONLY_DB_USER = DATABASES["readonly"]["USER"]
+READONLY_DB_PASSWORD = DATABASES["readonly"]["PASSWORD"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LANGUAGE_CODE = "en-us"
@@ -100,13 +110,13 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = REPO_ROOT / "media"
+MEDIA_ROOT = Path(env("MEDIA_ROOT", str(REPO_ROOT / "media")))  # point at a volume in production
 ASSETS_DIR = REPO_ROOT / "assets"
-LANGGRAPH_DB = BASE_DIR / "langgraph.sqlite"
+LANGGRAPH_DB = Path(env("LANGGRAPH_DB", str(BASE_DIR / "langgraph.sqlite")))  # paused approvals; keep on the same volume
 
 CORS_ALLOWED_ORIGINS = [o.strip() for o in env("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in env("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()] or CORS_ALLOWED_ORIGINS
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.api.auth.MerchantSessionAuthentication"],
@@ -139,5 +149,11 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {"plain": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain"}},
-    "loggers": {"munim": {"handlers": ["console"], "level": "INFO"}},
+    "loggers": {
+        "munim": {"handlers": ["console"], "level": "INFO"},
+        # without these, a 500 in production leaves no traceback anywhere
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
+    "root": {"handlers": ["console"], "level": "WARNING"},
 }

@@ -114,6 +114,7 @@ def get_graph():
     global _graph
     with _lock:
         if _graph is None:
+            settings.LANGGRAPH_DB.parent.mkdir(parents=True, exist_ok=True)  # e.g. a fresh volume
             conn = sqlite3.connect(str(settings.LANGGRAPH_DB), check_same_thread=False)
             _graph = build(SqliteSaver(conn))
         return _graph
