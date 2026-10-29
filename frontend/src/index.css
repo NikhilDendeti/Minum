@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paytm-blue: #00baf2;
+  --navy: #002e6e;
+  --bg: #fbfcfe;
+  --ink: #3d4a5c;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #e9eef5;
+  color: var(--ink);
+  font-family: Inter, "DM Sans", "Noto Sans Telugu", "Noto Sans Devanagari", system-ui, sans-serif;
+}
+
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}

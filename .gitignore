@@ -1,0 +1,21 @@
+# secrets
+.env
+
+# python
+.venv/
+__pycache__/
+*.pyc
+backend/langgraph.sqlite*
+
+# generated at runtime
+media/
+
+# node
+node_modules/
+frontend/dist/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

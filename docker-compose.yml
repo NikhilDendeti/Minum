@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    container_name: munim-db
+    environment:
+      POSTGRES_USER: munim
+      POSTGRES_PASSWORD: munim
+      POSTGRES_DB: munim
+    ports:
+      - "5433:5432"
+    volumes:
+      - munim-pgdata:/var/lib/postgresql/data
+      - ./docker/init-readonly-role.sql:/docker-entrypoint-initdb.d/10-readonly-role.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U munim -d munim"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  munim-pgdata:

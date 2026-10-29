@@ -1,0 +1,11 @@
+Django>=5.1,<5.3
+djangorestframework>=3.15
+django-cors-headers>=4.4
+psycopg[binary]>=3.2
+langgraph>=0.2.60
+langgraph-checkpoint-sqlite>=2.0
+openai>=1.50
+pandas>=2.2
+numpy>=1.26
+sarvamai>=0.1.40
+python-dotenv>=1.0

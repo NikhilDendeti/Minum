@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "code": "en-IN",
+    "name": "English",
+    "native": "English",
+    "scripts": [],
+    "yes": ["haan", "han", "ha", "haa", "yes", "yeah", "yep", "sure", "ok", "okay", "avunu", "avunandi", "sari", "theek", "thik", "ji"],
+    "no": ["nahi", "nahin", "nahee", "na", "no", "nope", "kaadu", "kadu", "ledu", "mat"]
+  },
+  "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  "weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  "scripted": {
+    "q_settlement": [
+      ["settlement", "settlements"],
+      ["kam", "short", "less", "low", "kyun", "kyu", "why"]
+    ],
+    "q_yesterday": [
+      ["kal", "yesterday", "ninna"],
+      ["kitna", "kitne", "earn", "earned", "earning", "hua", "sales", "kamai", "how much"]
+    ],
+    "q_cash": [
+      ["paise", "paisa", "cash", "money", "balance"],
+      ["kab", "tak", "chalenge", "last", "enough", "gap", "forecast"]
+    ],
+    "q_growth": [
+      ["customer", "customers", "grahak"],
+      ["wapas", "aayenge", "back", "bring", "return", "lapsed"]
+    ]
+  },
+  "examples": {
+    "q_settlement": "Why is my settlement short?",
+    "q_yesterday": "How much did I earn yesterday?",
+    "q_cash": "How long will my cash last?",
+    "q_growth": "How do I bring back old customers?"
+  },
+  "phrasings": {
+    "q_settlement": ["Mera settlement kam kyun aaya?", "settlement kyun kam hai"],
+    "q_yesterday": ["Kal kitna hua?", "kal kitni kamai hui"],
+    "q_cash": ["Paise kab tak chalenge?", "cash kab tak chalega"],
+    "q_growth": ["Purane customer wapas kaise aayenge?", "customers wapas kaise laye"]
+  },
+  "strings": {
+    "date_label": "{day} {month}",
+    "period_evening": "evenings",
+    "period_midday": "midday",
+    "period_morning": "mornings",
+    "slow_phrase": "{period} {label}",
+    "word_lower": "lower",
+    "word_higher": "higher",
+    "settlement": "Your {date} settlement was Rs {shortfall} short of gross sales: Rs {refunds} in {n} refunds and Rs {mdr} in fees.",
+    "yesterday": "Yesterday you earned Rs {earned}, {d}% {word} than usual for a {wd}. The slowest hours are {slow}, and {lapsed} regular customers haven't visited in two weeks.",
+    "cash_none": "Your cash looks fine for the next 14 days.",
+    "cash_body": "Your cash will run short on {gap}. You owe {name} Rs {amt} by {due}, and the balance will fall Rs {short} below zero.",
+    "cash_tail": " You have a pre-approved credit offer of Rs {offer} for {tenure} days. Shall I accept it?",
+    "growth": "{count} regular customers haven't visited in two weeks. They usually spend about Rs {avg} a month. I drafted a {disc}% offer valid for {days} days. Shall I send it?",
+    "other": "I don't have that data, so I won't guess. Ask me about sales, settlements, cash flow or regular customers.",
+    "promo": "{merchant} misses you! Enjoy {discount}% off on your next visit this week.",
+    "credit_offer": "Pre-approved credit of Rs {amount} for {tenure} days.",
+    "confirm_no": "Okay, I won't go ahead with it.",
+    "confirm_credit": "Done. Rs {amount} credit is approved and will reach your account.",
+    "confirm_promo": "Done. The offer went to {n} regular customers.",
+    "alert_settlement": "Your {date} settlement was Rs {shortfall} short. Ask me why.",
+    "alert_cash": "Cash will run short on {date}. A pre-approved credit offer of Rs {amount} is ready.",
+    "err_no_speech": "I couldn't hear anything. Please try again.",
+    "err_undecided": "Didn't catch that, try again.",
+    "err_llm_unavailable": "I can't reach my reasoning service right now. Try one of the suggested questions.",
+    "err_llm_timeout": "I'm taking too long to answer. Please try again.",
+    "err_stt_unavailable": "Voice recognition is offline. Tap a suggested question or type.",
+    "err_server_error": "Something went wrong. Please try again.",
+    "err_unauthenticated": "Please log in again.",
+    "err_invalid_otp": "That code is not correct.",
+    "err_too_many_attempts": "Too many tries. Please wait a few minutes."
+  }
+}
