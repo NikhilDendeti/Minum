@@ -323,7 +323,10 @@ class AuthAndTenancyTests(TestCase):
         self.assertEqual((r.status_code, body["seeded"]), (200, True))
         self.assertIsInstance(body["seconds"], float)
         from apps.core.models import Conversation, Offer
-        self.assertEqual((Offer.objects.count(), Conversation.objects.count()), (0, 0))
+        # old offers and conversations are gone; the warm-up re-creates only the three opening proposals
+        self.assertEqual(set(Offer.objects.values_list("status", flat=True)), {"proposed"})
+        self.assertEqual(sorted(Offer.objects.values_list("type", flat=True)), ["credit", "promo", "stock"])
+        self.assertEqual(Conversation.objects.count(), 0)
 
     def test_otp_login_and_logout(self):
         client = APIClient()
