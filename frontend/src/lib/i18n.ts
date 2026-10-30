@@ -52,3 +52,19 @@ export const timeOfDay = (ms: number, lang = DEFAULT_LANG) => dtf(lang, { hour: 
 
 export const greetingKey = (hour = new Date().getHours()): "greetMorning" | "greetAfternoon" | "greetEvening" =>
   hour < 12 ? "greetMorning" : hour < 17 ? "greetAfternoon" : "greetEvening";
+
+/** The credit offer's "how the amount is set" line, worded in the UI language. `basis` is the English fallback. */
+export const creditBasis = (payload: Record<string, any>, t: Strings) => {
+  const parsed = /^(\d+) x .*Rs ([\d,]+)\)?$/.exec(String(payload.basis ?? "")); // offers made before the numbers were stored
+  const multiple = Number(payload.multiple ?? parsed?.[1]);
+  const daily = Number(payload.avg_daily_net ?? parsed?.[2]?.replace(/,/g, ""));
+  return multiple && daily ? fmt(t.creditBasis, { n: multiple, amount: inr(daily) }) : String(payload.basis ?? "");
+};
+
+/** Obligation names come from the data in English ("Shop rent", "Supplier payment - Sri Balaji Traders"); the generic part is translated. */
+export const obligationLabel = (label: string, t: Strings) => {
+  if (label === "Shop rent") return t.obShopRent;
+  if (label === "Electricity bill") return t.obElectricity;
+  const supplier = /^Supplier payment - (.+)$/.exec(label);
+  return supplier ? fmt(t.obSupplier, { name: supplier[1] }) : label;
+};

@@ -3,7 +3,7 @@ import ForecastChart from "../components/ForecastChart";
 import { CreditDialog } from "../components/OfferDialogs";
 import { Disclosure, EmptyState, Icon, Notice, PageHeading, SimulatedTag, Skeleton, StatusLabel } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
-import { fmt, inr, shortDate, timeOfDay } from "../lib/i18n";
+import { creditBasis, fmt, inr, obligationLabel, shortDate, timeOfDay } from "../lib/i18n";
 import { firstBelowZero, lowest, scenarioDays } from "../lib/scenario";
 
 type Scenario = "base" | "credit";
@@ -78,7 +78,7 @@ export default function CashFlow() {
       : t.noGap;
   const detail = first
     ? fmt(t.lowestLine, { amount: inr(low!.balance), date: shortDate(low!.date, lang) }) +
-      (driver && !showCredit ? " " + fmt(t.mainReason, { label: driver.label, amount: inr(driver.amount), due: shortDate(driver.due_on, lang) }) : "")
+      (driver && !showCredit ? " " + fmt(t.mainReason, { label: obligationLabel(driver.label, t), amount: inr(driver.amount), due: shortDate(driver.due_on, lang) }) : "")
     : low
       ? fmt(t.lowestAboveZero, { amount: inr(low.balance), date: shortDate(low.date, lang) })
       : "";
@@ -154,7 +154,7 @@ export default function CashFlow() {
                 {forecast.obligations.map((o) => (
                   <li key={o.id} className="flex items-baseline justify-between gap-4 px-4 py-3">
                     <span className="min-w-0">
-                      <span className="block break-words">{o.label}</span>
+                      <span className="block break-words">{obligationLabel(o.label, t)}</span>
                       <span className="meta">{fmt(t.dueOn, { date: shortDate(o.due_on, lang) })}</span>
                     </span>
                     <span className="num shrink-0 font-semibold">{inr(o.amount)}</span>
@@ -194,7 +194,7 @@ export default function CashFlow() {
               <dl className="divide-y divide-line rounded-ctl border border-line text-[14px]">
                 <div className="px-3 py-2">
                   <dt className="meta">{t.howAmountSet}</dt>
-                  <dd lang="en">{String(offer.payload.basis ?? "")}</dd>
+                  <dd>{creditBasis(offer.payload, t)}</dd>
                 </div>
                 <div className="flex justify-between gap-3 px-3 py-2">
                   <dt className="meta">{t.interestFees}</dt>

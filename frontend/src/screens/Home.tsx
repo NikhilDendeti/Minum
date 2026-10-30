@@ -3,11 +3,12 @@ import BriefingPlayer from "../components/BriefingPlayer";
 import Soundbox from "../components/Soundbox";
 import { EmptyState, Icon, PageHeading, SimulatedTag, Skeleton, StatusLabel } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
-import { addDays, fmt, greetingKey, inr, longDate, shortDate, timeOfDay, weekdayName } from "../lib/i18n";
+import { addDays, fmt, greetingKey, inr, longDate, obligationLabel, shortDate, timeOfDay, weekdayName } from "../lib/i18n";
 
 function Loading() {
+  const { t } = useMunim();
   return (
-    <div className="space-y-5" role="status" aria-label="Loading">
+    <div className="space-y-5" role="status" aria-label={t.loading}>
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-72" />
       <Skeleton className="h-24" />
@@ -139,7 +140,7 @@ export default function Home() {
                 <p className="mt-2 text-[17px] font-semibold leading-snug text-navy">{fmt(t.cashMayRunShort, { date: shortDate(gap.first_negative_date, lang) })}</p>
                 <p className="mt-1.5 text-[14px]">
                   {gap.driver
-                    ? fmt(t.cashWhy, { shortfall: inr(gap.shortfall), label: gap.driver.label, amount: inr(gap.driver.amount), due: shortDate(gap.driver.due_on, lang) })
+                    ? fmt(t.cashWhy, { shortfall: inr(gap.shortfall), label: obligationLabel(gap.driver.label, t), amount: inr(gap.driver.amount), due: shortDate(gap.driver.due_on, lang) })
                     : fmt(t.cashWhyNoDriver, { shortfall: inr(gap.shortfall) })}
                 </p>
                 {creditOffer && <p className="mt-1.5 text-[14px]">{fmt(t.creditAvailable, { amount: inr(Number(creditOffer.payload.amount)) })}</p>}

@@ -1,7 +1,7 @@
 """Idempotent creation of the one open proposal per type (R11): reloading a screen never makes new offers."""
 from apps.core.models import Offer
 
-from .credit import credit_eligibility
+from .credit import MULTIPLE, credit_eligibility
 from .forecast import forecast
 from .promo import draft_promo
 from .segments import segment_customers
@@ -26,6 +26,7 @@ def ensure_credit_offer(merchant_id):
     text = templates.credit_offer_text(eligibility["amount"], eligibility["tenure_days"])
     return Offer.objects.create(merchant_id=merchant_id, type="credit", payload={
         "amount": eligibility["amount"], "tenure_days": eligibility["tenure_days"], "basis": eligibility["basis"],
+        "multiple": MULTIPLE, "avg_daily_net": eligibility["avg_daily_net"],  # the numbers behind `basis`, for the UI to word itself
         "gap_date": fc["gap"]["first_negative_date"], "text_en": text["en"], "text_by_lang": text})
 
 

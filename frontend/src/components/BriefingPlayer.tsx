@@ -9,11 +9,11 @@ import { Disclosure, Icon, Notice } from "./ui";
 export default function BriefingPlayer({ briefing }: { briefing: Briefing }) {
   const { t } = useMunim();
   const clip = useAudio(briefing.audio_url);
-  const [textOpen, setTextOpen] = useState(!briefing.audio_url); // the transcript is open when there is no audio to listen to
+  // The transcript has one owner: this toggle. Playback never opens, closes or locks it. It starts open only when there is no audio to listen to.
+  const [textOpen, setTextOpen] = useState(!briefing.audio_url);
   const chime = clip.chiming;
 
   const start = async () => {
-    setTextOpen(true); // subtitles appear as soon as the briefing starts
     if (briefing.audio_url) await audio.playWithChime(briefing.audio_url);
   };
   const stop = () => audio.stopAll();
