@@ -1,5 +1,8 @@
 """Grounding check (F6): every number in the English draft must appear in a tool result of the same turn."""
+import logging
 import re
+
+log = logging.getLogger("munim.grounding")
 
 _MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"
 _DATES = [re.compile(rf"\b\d{{1,2}}\s+{_MONTH}\b"), re.compile(rf"\b{_MONTH}\s+\d{{1,2}}\b"),
@@ -50,3 +53,39 @@ def ungrounded(answer_en, tool_calls):
         allowed |= result_numbers(call.get("result"))
     return [n for n in numbers_in(answer_en)
             if not any(abs(n - a) < 1e-6 or round(a) == n for a in allowed)]
+
+
+# --- sentence-level clean-up ------------------------------------------------------------------------------------------
+# A sentence ends at . ! ? or । followed by whitespace, except after "Rs." and list numbers ("1. Ravi").
+_SPLIT = re.compile(r"(?<!\bRs\.)(?<!\b\d\.)(?<!\b\d\d\.)(?<=[.!?।])(\s+)")
+_CLOSERS = ".!?।\"')”"
+
+
+def _pieces(text):
+    """[(sentence, whitespace that followed it), ...] so a sentence can be removed without disturbing the rest."""
+    parts = _SPLIT.split((text or "").strip())
+    return [(parts[i], parts[i + 1] if i + 1 < len(parts) else "") for i in range(0, len(parts), 2)]
+
+
+def _join(pieces):
+    return "".join(s + sep for s, sep in pieces).strip()
+
+
+def complete_sentences(text):
+    """Remove a trailing fragment that does not end like a sentence (a cut-off answer). Whole sentences only; text with a
+    single unfinished sentence is returned as it is, since there is nothing complete to keep."""
+    pieces = _pieces(text)
+    if len(pieces) > 1 and not pieces[-1][0].rstrip().endswith(tuple(_CLOSERS)):
+        log.warning("dropped a dangling fragment: %r", pieces[-1][0])
+        pieces = pieces[:-1]
+    return _join(pieces)
+
+
+def drop_ungrounded(answer_en, tool_calls):
+    """Remove each whole sentence that states a number no tool result contains. Returns (clean answer, removed sentences)."""
+    kept, removed = [], []
+    for sentence, sep in _pieces(answer_en):
+        (removed if ungrounded(sentence, tool_calls) else kept).append((sentence, sep))
+    if removed:
+        log.warning("grounding removed %d sentence(s): %s", len(removed), [s for s, _ in removed])
+    return _join(kept), [s for s, _ in removed]

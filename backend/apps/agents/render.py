@@ -17,9 +17,13 @@ def render_answer(answer_en, lang):
         return answer_en
     try:
         prompt = llm.load_prompt("render").format(language=i18n.LANGUAGES[lang].name, answer=answer_en)
-        local = llm.chat([{"role": "user", "content": prompt}])
+        reply, truncated = llm.complete_ex([{"role": "user", "content": prompt}])
+        local = grounding.complete_sentences((reply.content or "").strip())
     except llm.LLMUnavailable as exc:
         log.info("render fell back to English (%s)", exc)
+        return answer_en
+    if truncated:
+        log.warning("render was cut off by the token limit; using the English draft")
         return answer_en
     if sorted(grounding.numbers_in(local, strip_dates=False)) != sorted(grounding.numbers_in(answer_en, strip_dates=False)):
         log.warning("render changed the numbers; using the English draft")

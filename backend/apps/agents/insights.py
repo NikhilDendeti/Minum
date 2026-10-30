@@ -72,7 +72,7 @@ def run_insights(state):
     messages = [{"role": "system", "content": _system()}, {"role": "user", "content": state["transcript"]}]
     calls, answer, corrected = [], "", False
     for _ in range(MAX_ROUNDS):
-        msg = llm.complete(messages, tools=TOOLS)
+        msg, truncated = llm.complete_ex(messages, tools=TOOLS)
         if msg.tool_calls:
             messages.append(msg.model_dump(exclude_none=True))
             for tc in msg.tool_calls:
@@ -85,15 +85,19 @@ def run_insights(state):
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, default=str)})
             continue
         answer = (msg.content or "").strip()
+        if truncated:
+            log.warning("answer hit the token limit; keeping whole sentences only")
+        answer = grounding.complete_sentences(answer)  # never speak a cut-off sentence
         bad = grounding.ungrounded(answer, calls)
         if bad and not corrected:  # F6: never speak a number that no tool returned
             corrected = True
             messages += [{"role": "assistant", "content": answer},
                          {"role": "user", "content": f"These numbers are not in any tool result: {bad}. Rewrite using only tool results."}]
             continue
-        if bad:
-            log.warning("ungrounded numbers %s; falling back to 'no data' answer", bad)
-            answer = templates.answer_other()["en"]
+        if bad:  # still not grounded after one correction: keep only the sentences that are, whole
+            answer, removed = grounding.drop_ungrounded(answer, calls)
+            log.warning("ungrounded numbers %s; removed sentences %s", bad, removed)
+            answer = answer or templates.answer_other()["en"]
         break
     else:
         answer = templates.answer_other()["en"]

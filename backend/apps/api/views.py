@@ -221,7 +221,7 @@ def _ask_approval(merchant, offer, verdict, transcript, lang, latency):
     return Response({
         "conversation_id": conversation.id, "transcript": transcript, "language": lang, "intent": "approval",
         "agent": "executor", "answer_local": conversation.answer_local, "answer_en": conversation.answer_en,
-        "audio_url": audio_url, "evidence": {"sql": "", "rows": [], "tool": None},
+        "audio_url": audio_url, "evidence": {"sql": "", "rows": [], "tool": None, "queries": [], "query_count": 0, "row_count": 0},
         "proposal": serialize_offer(offer, lang), "latency_ms": latency})
 
 

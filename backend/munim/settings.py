@@ -135,6 +135,7 @@ REST_FRAMEWORK = {
 LLM_MODEL = env("LLM_MODEL", "gpt-4o")
 LLM_FALLBACK_MODEL = env("LLM_FALLBACK_MODEL", "gpt-4o-mini")
 LLM_TIMEOUT_S = float(env("LLM_TIMEOUT_S", "10"))
+LLM_MAX_TOKENS = int(env("LLM_MAX_TOKENS", "2000"))  # output cap per call; Telugu/Hindi need several times the tokens of English
 OPENAI_API_KEY = env("OPENAI_API_KEY")
 
 # --- Speech -------------------------------------------------------------------

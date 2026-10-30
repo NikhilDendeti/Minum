@@ -57,10 +57,18 @@ export interface Briefing {
   alerts: Alert[];
 }
 
-export interface Evidence {
+export interface EvidenceQuery {
   sql: string;
   rows: Record<string, unknown>[];
   tool: string | null;
+  error?: string;
+}
+
+export interface Evidence extends EvidenceQuery {
+  // every query the turn ran, in order; `sql` / `rows` are the one that best matches the answer
+  queries?: EvidenceQuery[];
+  query_count?: number;
+  row_count?: number;
 }
 
 export interface AskResponse {

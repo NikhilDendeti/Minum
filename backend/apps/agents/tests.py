@@ -1,5 +1,6 @@
 """Backend tests. They seed the test database once (the same logic as seed_demo) and run entirely offline:
 scripted questions never call an LLM, and no speech provider is needed."""
+import json
 import tempfile
 from datetime import timedelta
 from pathlib import Path
@@ -156,6 +157,52 @@ class MunimTests(TestCase):
         self.assertEqual(grounding.ungrounded(answer, calls), [])
         self.assertEqual(grounding.ungrounded("Spent Rs 9,999", calls), [9999.0])
 
+    def test_grounding_drops_whole_sentences_and_dangling_fragments(self):
+        calls = [{"name": "run_sql", "args": {}, "result": {"rows": [{"day": "Sunday", "sales": 292675}], "row_count": 1}}]
+        answer = "Sunday sells the most, Rs 2,92,675. UPI brought Rs 5,00,000 last month. Card was lower."
+        clean, removed = grounding.drop_ungrounded(answer, calls)
+        self.assertEqual(clean, "Sunday sells the most, Rs 2,92,675. Card was lower.")
+        self.assertEqual(removed, ["UPI brought Rs 5,00,000 last month."])
+        self.assertEqual(grounding.complete_sentences("Sunday sells the most. UPI contributed Rs 4,10"), "Sunday sells the most.")
+        self.assertEqual(grounding.complete_sentences("Sunday sells the most."), "Sunday sells the most.")
+        self.assertEqual(grounding.complete_sentences("Paid Rs. 500 on time. Next one is due"), "Paid Rs. 500 on time.")
+        lines = "Top customers:\n1. Spent Rs 5,851\n2. Spent Rs 5,821"
+        self.assertEqual(grounding.complete_sentences(lines), lines)
+
+    def test_every_query_of_the_turn_is_in_the_evidence(self):
+        one = {"name": "run_sql", "args": {"query": "SELECT day"}, "result": {"rows": [{"day": "Sunday", "sales": 292675}], "row_count": 1}}
+        two = {"name": "run_sql", "args": {"query": "SELECT mode"}, "result": {"rows": [{"mode": "upi"}, {"mode": "card"}], "row_count": 2}}
+        bad = {"name": "run_sql", "args": {"query": "SELEC oops"}, "result": {"error": "syntax error"}}
+        values = {"tool_calls": [one, bad, two], "answer_en": "Sunday sells Rs 2,92,675."}
+        evidence = build_evidence(1, values)
+        self.assertEqual([q["sql"] for q in evidence["queries"]], ["SELECT day", "SELEC oops", "SELECT mode"])
+        self.assertEqual((evidence["query_count"], evidence["row_count"]), (3, 3))
+        self.assertEqual(evidence["sql"], "SELECT day")  # the best match for the answer stays the headline query
+        self.assertEqual(evidence["queries"][1]["error"], "syntax error")
+
+    def test_insights_loop_keeps_the_grounded_sentences_when_the_model_will_not_fix_itself(self):
+        from types import SimpleNamespace
+
+        from apps.agents.insights import run_insights
+
+        def tool(query):
+            call = SimpleNamespace(id="c", function=SimpleNamespace(name="run_sql", arguments=json.dumps({"query": query})))
+            return SimpleNamespace(content=None, tool_calls=[call], model_dump=lambda exclude_none=True: {"role": "assistant"})
+
+        def say(text):
+            return SimpleNamespace(content=text, tool_calls=None, model_dump=lambda exclude_none=True: {"role": "assistant"})
+
+        steps = iter([
+            (tool("SELECT SUM(amount) AS sales FROM transactions WHERE status = 'success'"), False),
+            (tool("SELECT mode, COUNT(*) AS n FROM transactions GROUP BY mode"), False),
+            (say("Your total sales are in the data. UPI brought Rs 1,23,456,789."), False),
+            (say("Your total sales are in the data. UPI brought Rs 1,23,456,789 in all. Card is smaller. And UPI contributed Rs 4"), True),
+        ])
+        with mock.patch("apps.agents.insights.llm.complete_ex", side_effect=lambda *a, **k: next(steps)):
+            out = run_insights({"merchant_id": 1, "transcript": "which day, UPI vs card?", "language": "en-IN"})
+        self.assertEqual(out["answer_en"], "Your total sales are in the data. Card is smaller.")
+        self.assertEqual(len(out["tool_calls"]), 2)
+
     def test_polish_formats_amounts_and_dates_only(self):
         self.assertEqual(polish.polish("Best day was 2026-11-08 with Rs 12285."), "Best day was Sunday 8 Nov with Rs 12,285.")
         self.assertEqual(polish.polish("Last month's sales were 300002."), "Last month's sales were 3,00,002.")
@@ -235,11 +282,23 @@ class AuthAndTenancyTests(TestCase):
     def test_unauthenticated_requests_are_rejected(self):
         client = APIClient()
         for method, path in (("get", "/api/briefing"), ("get", "/api/forecast"), ("get", "/api/growth"), ("get", "/api/me"),
-                             ("post", "/api/ask"), ("get", "/api/suggestions"), ("post", "/api/reset"),
+                             ("post", "/api/ask"), ("get", "/api/suggestions"),
                              ("post", "/api/offers/1/decide"), ("get", "/api/conversations/1")):
             r = getattr(client, method)(path)
             self.assertEqual(r.status_code, 401, path)
             self.assertEqual(r.json()["error"]["code"], "unauthenticated")
+
+    def test_reset_works_from_the_login_screen_in_demo_mode_only(self):
+        client = APIClient()
+        with override_settings(DEMO_MODE=False):
+            r = client.post("/api/reset")
+            self.assertEqual((r.status_code, r.json()["error"]["code"]), (403, "forbidden"))
+        r = client.post("/api/reset")
+        body = r.json()
+        self.assertEqual((r.status_code, body["seeded"]), (200, True))
+        self.assertIsInstance(body["seconds"], float)
+        from apps.core.models import Conversation, Offer
+        self.assertEqual((Offer.objects.count(), Conversation.objects.count()), (0, 0))
 
     def test_otp_login_and_logout(self):
         client = APIClient()
