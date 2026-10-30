@@ -351,5 +351,6 @@
   "creditBasis": "సగటు రోజువారీ నికర ఆదాయం ({amount}) కు {n} రెట్లు",
   "obShopRent": "షాపు అద్దె",
   "obElectricity": "కరెంటు బిల్లు",
-  "obSupplier": "సప్లయర్‌కు చెల్లింపు - {name}"
+  "obSupplier": "సప్లయర్‌కు చెల్లింపు - {name}",
+  "creditLandsOn": "క్రెడిట్ {date} న చేరుతుంది (కృత్రిమం)"
 }

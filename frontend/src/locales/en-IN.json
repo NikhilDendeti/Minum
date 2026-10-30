@@ -351,5 +351,6 @@
   "creditBasis": "{n} x average daily net inflow ({amount})",
   "obShopRent": "Shop rent",
   "obElectricity": "Electricity bill",
-  "obSupplier": "Supplier payment - {name}"
+  "obSupplier": "Supplier payment - {name}",
+  "creditLandsOn": "Credit added {date} (simulated)"
 }

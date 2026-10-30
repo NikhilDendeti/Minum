@@ -199,7 +199,7 @@ export default function Home() {
               </button>
             </section>
           )}
-          <div className="order-5">
+          <div className="order-5 lg:order-first">
             <Soundbox briefing={briefing} />
           </div>
         </div>

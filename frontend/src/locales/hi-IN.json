@@ -351,5 +351,6 @@
   "creditBasis": "औसत रोज़ाना शुद्ध आमद ({amount}) का {n} गुना",
   "obShopRent": "दुकान का किराया",
   "obElectricity": "बिजली का बिल",
-  "obSupplier": "सप्लायर को भुगतान - {name}"
+  "obSupplier": "सप्लायर को भुगतान - {name}",
+  "creditLandsOn": "क्रेडिट {date} को जुड़ेगा (नकली)"
 }

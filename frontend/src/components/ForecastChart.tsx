@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CHART } from "../lib/theme";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMunim } from "../hooks/useMunim";
-import { inr, inrCompact, shortDate } from "../lib/i18n";
+import { fmt, inr, inrCompact, shortDate } from "../lib/i18n";
 import type { ScenarioDay } from "../lib/scenario";
 import { Disclosure, Icon } from "./ui";
 
@@ -36,6 +36,7 @@ export default function ForecastChart({
   const data = days.map((d) => ({ ...d, label: shortDate(d.date, lang) }));
   const below = data.filter((d) => d.base < 0);
   const gap = below[0];
+  const creditFrom = data.find((d) => d.date === d.creditFrom) ?? null;
   const lowBase = below.length ? below.reduce((a, b) => (b.base < a.base ? b : a)) : null;
 
   return (
@@ -91,6 +92,15 @@ export default function ForecastChart({
             <Line type="monotone" dataKey="base" stroke={BASE} strokeWidth={2.5} strokeDasharray="7 5" dot={false} activeDot={{ r: 5 }} animationDuration={250} />
             {showCredit && (
               <Line type="monotone" dataKey="credit" stroke={CREDIT} strokeWidth={3} strokeDasharray="1 6" strokeLinecap="round" dot={false} activeDot={{ r: 5 }} animationDuration={250} />
+            )}
+            {showCredit && creditFrom && (
+              <ReferenceLine
+                x={creditFrom.label}
+                stroke={CREDIT}
+                strokeDasharray="2 3"
+                ifOverflow="extendDomain"
+                label={{ value: fmt(t.creditLandsOn, { date: creditFrom.label }), position: "insideTopRight", dy: 20, fill: CREDIT, fontSize: 12, fontWeight: 600 }}
+              />
             )}
             {gap && (
               <ReferenceLine
