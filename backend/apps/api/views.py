@@ -231,7 +231,10 @@ def forecast_view(request):
     offer = ensure_credit_offer(merchant.id)
     credit = offer.payload["amount"] if offer and offer.status == "approved" else 0
     fc = forecast(merchant.id, 14, credit=credit)
-    return Response({"as_of": fc["as_of"], "days": fc["days"], "gap": fc["gap"], "obligations": fc["obligations"],
+    # an approved credit hides the gap from `fc`; `base_gap` is always the shortfall the obligations cause on their own
+    base_gap = forecast(merchant.id, 14)["gap"] if credit else fc["gap"]
+    return Response({"as_of": fc["as_of"], "days": fc["days"], "gap": fc["gap"], "base_gap": base_gap,
+                     "obligations": fc["obligations"],
                      "credit_applied": credit, "offer": serialize_offer(offer, merchant.language)})
 
 

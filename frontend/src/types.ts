@@ -93,15 +93,18 @@ export interface ForecastDay {
   balance: number;
 }
 
+export interface ForecastGap {
+  first_negative_date: string;
+  min_balance: number;
+  shortfall: number;
+  driver: { label: string; amount: number; due_on: string } | null;
+}
+
 export interface Forecast {
   as_of: string;
   days: ForecastDay[];
-  gap: {
-    first_negative_date: string;
-    min_balance: number;
-    shortfall: number;
-    driver: { label: string; amount: number; due_on: string } | null;
-  } | null;
+  gap: ForecastGap | null; // with any approved credit applied
+  base_gap: ForecastGap | null; // without credit: what the obligations cause on their own
   obligations: { id: number; label: string; amount: number; due_on: string }[];
   credit_applied: number;
   offer: Offer | null;

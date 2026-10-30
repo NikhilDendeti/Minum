@@ -1,7 +1,7 @@
 import AskBox, { Suggestions } from "../components/AskBox";
 import BriefingPlayer from "../components/BriefingPlayer";
 import Soundbox from "../components/Soundbox";
-import { EmptyState, Icon, PageHeading, Skeleton, StatusLabel } from "../components/ui";
+import { EmptyState, Icon, PageHeading, SimulatedTag, Skeleton, StatusLabel } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
 import { addDays, fmt, greetingKey, inr, longDate, shortDate, timeOfDay, weekdayName } from "../lib/i18n";
 
@@ -16,7 +16,7 @@ function Loading() {
 }
 
 export default function Home() {
-  const { briefing, briefingState, forecast, stale, syncedAt, user, lang, setTab, ask, asking, offline, retry, t } = useMunim();
+  const { briefing, briefingState, forecast, growth, offers, stale, syncedAt, user, lang, setTab, ask, asking, offline, retry, t } = useMunim();
 
   if (!briefing) {
     return briefingState === "error" ? (
@@ -47,9 +47,14 @@ export default function Home() {
     baseline: inr(k.baseline),
   });
 
-  const gap = forecast?.gap ?? null;
+  // the shortfall the obligations cause by themselves: an approved credit hides it from forecast.gap, never from here
+  const gap = forecast ? forecast.base_gap ?? forecast.gap : null;
   const settlement = briefing.alerts.find((a) => a.type === "settlement_short");
-  const creditOffer = forecast?.offer && forecast.offer.status === "proposed" ? forecast.offer : null;
+  const credit = forecast?.offer ? offers[forecast.offer.id] ?? forecast.offer : null;
+  const creditOffer = credit && credit.status === "proposed" ? credit : null;
+  const creditApproved = credit && credit.status === "approved" ? credit : null;
+  const promo = growth?.offer ? offers[growth.offer.id] ?? growth.offer : null;
+  const promoSent = promo && (promo.status === "sent" || promo.status === "approved") ? promo : null;
 
   return (
     <div className="space-y-5">
@@ -111,6 +116,24 @@ export default function Home() {
               {t.needsAttention}
             </h2>
             {gap ? (
+              creditApproved ? (
+                <div className="card border-l-4 border-l-ok-fg p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusLabel tone="ok">{t.statusApproved}</StatusLabel>
+                    <SimulatedTag />
+                  </div>
+                  <p className="mt-2 text-[17px] font-semibold leading-snug text-navy">
+                    {fmt(t.cashCoveredByCredit, { date: shortDate(gap.first_negative_date, lang), amount: inr(Number(creditApproved.payload.amount)) })}
+                  </p>
+                  <p className="meta mt-2">
+                    {fmt(t.forecastAsOf, { date: shortDate(forecast!.as_of, lang) })}
+                    {stale("forecast") && ` · ${t.mayBeOutOfDate}`}
+                  </p>
+                  <button className="btn-secondary mt-3 w-full sm:w-auto" onClick={() => setTab("cash")}>
+                    {t.seeForecast}
+                  </button>
+                </div>
+              ) : (
               <div className="card border-l-4 border-l-warn-fg p-4">
                 <StatusLabel tone="forecast">{t.forecast}</StatusLabel>
                 <p className="mt-2 text-[17px] font-semibold leading-snug text-navy">{fmt(t.cashMayRunShort, { date: shortDate(gap.first_negative_date, lang) })}</p>
@@ -128,6 +151,7 @@ export default function Home() {
                   {t.seeForecast}
                 </button>
               </div>
+              )
             ) : forecast ? (
               <div className="card p-4">
                 <StatusLabel tone="ok">{t.allClear}</StatusLabel>
@@ -155,10 +179,21 @@ export default function Home() {
               <h2 id="grow-h" className="section-title">
                 {t.growthInsightTitle}
               </h2>
-              <p className="num mt-2 text-[28px] font-semibold leading-none text-navy">{k.lapsed_regulars}</p>
-              <p className="mt-1 text-[14px]">{t.growthInsightBody}</p>
+              {promoSent ? (
+                <>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <StatusLabel tone="ok">{t.statusSent}</StatusLabel>
+                  </div>
+                  <p className="mt-2 text-[14px]">{fmt(t.growthSentBody, { n: Number(promoSent.payload.reach ?? k.lapsed_regulars) })}</p>
+                </>
+              ) : (
+                <>
+                  <p className="num mt-2 text-[28px] font-semibold leading-none text-navy">{k.lapsed_regulars}</p>
+                  <p className="mt-1 text-[14px]">{t.growthInsightBody}</p>
+                </>
+              )}
               <button className="btn-secondary mt-3 w-full sm:w-auto" onClick={() => setTab("grow")}>
-                {t.reviewOffer}
+                {promoSent ? t.view : t.reviewOffer}
                 <Icon name="chevron" className="h-4 w-4 -rotate-90" />
               </button>
             </section>

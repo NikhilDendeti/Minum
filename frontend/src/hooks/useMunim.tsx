@@ -289,7 +289,7 @@ export function MunimProvider({ children }: { children: ReactNode }) {
     if (!authed) return;
     if (tab === "cash") void loadForecast();
     if (tab === "grow") void loadGrowth();
-    if (tab === "home") void Promise.all([loadBriefing(), loadForecast()]);
+    if (tab === "home") void Promise.all([loadBriefing(), loadForecast(), loadGrowth()]);
   }, [authed, tab]); // eslint-disable-line react-hooks/exhaustive-deps -- only on navigation
 
   // coming back online refreshes everything that was shown stale

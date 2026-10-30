@@ -335,5 +335,8 @@
   "resetDemo": "Reset demo",
   "resetting": "Resetting…",
   "resetDone": "Demo reset. Back to the start.",
-  "resetFailed": "Could not reset the demo. Try again."
+  "resetFailed": "Could not reset the demo. Try again.",
+  "cashCoveredByCredit": "Cash gap on {date} is covered by the {amount} credit you approved (simulated).",
+  "growthSentBody": "Offer sent to {n} regulars (simulated). Munim will track who returns.",
+  "view": "View"
 }
