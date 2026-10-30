@@ -5,6 +5,7 @@ from .credit import credit_eligibility
 from .forecast import forecast
 from .promo import draft_promo
 from .segments import segment_customers
+from .stock import busy_day
 
 
 def _latest(merchant_id, offer_type):
@@ -50,3 +51,18 @@ def set_thread(offer, thread_id):
     """Remember which paused LangGraph thread holds this offer's approval gate."""
     offer.payload = {**offer.payload, "thread_id": thread_id}
     offer.save(update_fields=["payload"])
+
+
+def ensure_stock_offer(merchant_id):
+    """Latest restock reminder, creating one when a clearly busier day is coming up. Timing only: no stock data exists."""
+    offer = _latest(merchant_id, "stock")
+    if offer:
+        return offer
+    day = busy_day(merchant_id)
+    if not day:
+        return None
+    from apps.agents import templates
+
+    text = templates.stock_text(day)
+    return Offer.objects.create(merchant_id=merchant_id, type="stock", payload={
+        **day, "text_en": text["en"], "text_by_lang": text})

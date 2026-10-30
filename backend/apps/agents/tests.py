@@ -325,3 +325,88 @@ class AuthAndTenancyTests(TestCase):
             client.patch("/api/me", {"language": "hi-IN"}, format="json")
             self.assertIn("रुपये", client.get("/api/briefing").json()["text_local"])
             self.assertEqual(client.patch("/api/me", {"language": "xx-XX"}, format="json").status_code, 400)
+
+    # --- restock reminder (timing only: the data has no item or stock levels) ----------------------------------
+    def test_busy_day_comes_from_the_merchants_own_sales(self):
+        from apps.tools.stock import busy_day
+        day = busy_day(1)
+        self.assertIsNotNone(day)
+        self.assertGreaterEqual(day["uplift_pct"], 10)
+        self.assertGreater(day["expected_sales"], day["typical_sales"])
+        self.assertEqual(day["weekday"], __import__("datetime").date.fromisoformat(day["date"]).weekday())
+
+    def test_stock_reminder_needs_approval_and_is_simulated(self):
+        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=Path(tmp)):
+            client = login(LAKSHMI)
+            offer = client.get("/api/growth").json()["stock"]
+            self.assertEqual((offer["type"], offer["status"]), ("stock", "proposed"))
+            self.assertEqual(client.get("/api/growth").json()["stock"]["id"], offer["id"])  # reloading makes no new offer
+            self.assertEqual(login(SHARMA).post(f"/api/offers/{offer['id']}/decide", {"decision": "approve", "via": "tap"},
+                                                format="json").status_code, 404)
+            done = client.post(f"/api/offers/{offer['id']}/decide", {"decision": "approve", "via": "tap"}, format="json").json()
+            self.assertEqual((done["status"], done["simulated"]), ("approved", True))
+            self.assertIn("demo", done["confirmation_en"].lower())
+
+    # --- richer seed data ---------------------------------------------------------------------------------------
+    def test_seed_passes_every_quality_check(self):
+        from apps.core import quality
+        self.assertEqual(quality.check(), [])
+
+    def test_quality_checks_catch_corrupted_data(self):
+        from apps.core import quality
+        from apps.core.models import Settlement, Transaction
+        settlement = Settlement.objects.filter(merchant_id=3).first()
+        original = settlement.net
+        settlement.net = original + 1
+        settlement.save(update_fields=["net"])
+        try:
+            self.assertTrue(any("settlements where net" in p for p in quality.check()))
+        finally:
+            settlement.net = original
+            settlement.save(update_fields=["net"])
+        txn = Transaction.objects.filter(merchant_id=3, status="success").first()
+        txn.amount = -5
+        txn.save(update_fields=["amount"])
+        try:
+            self.assertTrue(any("non-positive" in p for p in quality.check()))
+        finally:
+            txn.amount = 100
+            txn.save(update_fields=["amount"])
+
+    def test_six_merchants_with_different_shapes(self):
+        from apps.core.demo_merchants import demo_merchants
+        from apps.core.models import Merchant
+        profiles = demo_merchants()
+        self.assertEqual(len(profiles), 6)
+        self.assertEqual(len({p.phone for p in profiles}), 6)
+        self.assertEqual({m.language for m in Merchant.objects.all()}, {"te-IN", "hi-IN", "en-IN"})
+        self.assertEqual(len({m.category for m in Merchant.objects.all()}), 5)
+        tight = [p for p in profiles if p.cash == "tight"]
+        self.assertEqual({p.id for p in tight}, {4, 6})
+        today = settings.DEMO_TODAY
+        for p in profiles:
+            gap = forecast(p.id, 14)["gap"]
+            if p.stories or p.cash == "tight":
+                self.assertIsNotNone(gap, p.name)
+                self.assertEqual(gap["first_negative_date"], str(today + timedelta(days=7 if p.stories else p.supplier_due_days)))
+            else:
+                self.assertIsNone(gap, p.name)
+        for p in tight:
+            self.assertGreater(credit_eligibility(p.id)["amount"], 0)
+
+    def test_generation_is_deterministic(self):
+        from apps.core import seedgen
+        from apps.core.demo_merchants import demo_merchants
+        profile = demo_merchants()[4]
+        a, b = seedgen.generate(settings.DEMO_TODAY, profile), seedgen.generate(settings.DEMO_TODAY, profile)
+        self.assertEqual(a["rows"], b["rows"])
+        self.assertEqual(a["settlements"], b["settlements"])
+
+    def test_every_new_merchant_gets_a_briefing_and_a_forecast_through_the_api(self):
+        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=Path(tmp)):
+            for phone in ("9876500003", "9876500004", "9876500005", "9876500006"):
+                client = login(phone)
+                self.assertEqual(client.get("/api/forecast").status_code, 200, phone)
+                briefing = client.get("/api/briefing").json()
+                self.assertGreater(briefing["kpis"]["yesterday"], 0, phone)
+                self.assertEqual(client.get("/api/growth").status_code, 200, phone)

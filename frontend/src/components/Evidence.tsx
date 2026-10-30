@@ -11,12 +11,12 @@ const TOKEN = new RegExp(`(${KEYWORD.source}|'[^']*'|\\b\\d+(?:\\.\\d+)?\\b)`, "
 /** Colours the query for reading. The text itself is untouched: what is shown is exactly what ran. */
 export function Sql({ sql }: { sql: string }) {
   return (
-    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-ctl bg-forest p-3 font-mono text-[12.5px] leading-relaxed text-[#e4efe8]" lang="en" tabIndex={0}>
+    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-ctl bg-navy p-3 font-mono text-[12.5px] leading-relaxed text-[#e6eefb]" lang="en" tabIndex={0}>
       {sql.split(TOKEN).map((part, i) => {
         if (!part) return null;
-        if (KEYWORD.test(part) && /^[A-Za-z_ ]+$/.test(part)) return <span key={i} className="font-semibold text-[#9ad7b5]">{part}</span>;
+        if (KEYWORD.test(part) && /^[A-Za-z_ ]+$/.test(part)) return <span key={i} className="font-semibold text-[#7fd3f0]">{part}</span>;
         if (part.startsWith("'")) return <span key={i} className="text-[#f2c879]">{part}</span>;
-        if (/^\d/.test(part)) return <span key={i} className="text-[#8fc9d6]">{part}</span>;
+        if (/^\d/.test(part)) return <span key={i} className="text-[#9ad7b5]">{part}</span>;
         return <Fragment key={i}>{part}</Fragment>;
       })}
     </pre>

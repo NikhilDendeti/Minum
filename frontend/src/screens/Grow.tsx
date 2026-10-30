@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CampaignDialog, MessagePreview, channelLabel } from "../components/OfferDialogs";
+import StockReminder from "../components/StockReminder";
 import { EmptyState, Icon, Notice, PageHeading, SimulatedTag, Skeleton, StatusLabel } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
 import { fmt, inr } from "../lib/i18n";
@@ -70,7 +71,7 @@ export default function Grow() {
           <h2 id="seg-h" className="text-[15px] font-medium text-muted">
             {t.segment}
           </h2>
-          <p className="num mt-2 text-[44px] font-semibold leading-none text-forest">{seg.count}</p>
+          <p className="num mt-2 text-[44px] font-semibold leading-none text-navy">{seg.count}</p>
           <p className="mt-1 text-[15px]">{t.customers}</p>
           <p className="mt-3 text-[14px]">{t.ruleText}</p>
           {seg.avg_monthly_spend > 0 && (
@@ -196,6 +197,7 @@ export default function Grow() {
             )}
           </section>
         )}
+        {growth.stock && <StockReminder offer={growth.stock} locked={locked} />}
       </div>
 
       {dialog && offer && (

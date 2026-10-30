@@ -16,7 +16,7 @@ const demoMode = new URLSearchParams(window.location.search).get("demo") === "1"
 
 export function Wordmark({ onDark = false }: { onDark?: boolean }) {
   return (
-    <span className={`text-xl font-semibold tracking-tight ${onDark ? "text-white" : "text-forest"}`} lang="en">
+    <span className={`text-xl font-semibold tracking-tight ${onDark ? "text-white" : "text-navy"}`} lang="en">
       Munim
     </span>
   );
@@ -44,7 +44,7 @@ function SidebarNav() {
             onClick={() => setTab(n.id)}
             aria-current={active ? "page" : undefined}
             className={`flex min-h-[44px] items-center gap-3 rounded-ctl px-3 text-left text-[15px] font-medium transition-colors duration-150 ${
-              active ? "bg-white text-forest" : "text-white/85 hover:bg-white/10"
+              active ? "bg-white text-navy shadow-[inset_3px_0_0_var(--accent)]" : "text-white/85 hover:bg-white/10"
             }`}
           >
             <Icon name={n.icon} />
@@ -69,7 +69,7 @@ function BottomNav() {
             aria-current={active ? "page" : undefined}
             className={`relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 px-1 text-[12px] font-medium ${active ? "text-brand" : "text-muted"}`}
           >
-            {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-b bg-brand" aria-hidden />}
+            {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-b bg-accent" aria-hidden />}
             <Icon name={n.icon} className="h-6 w-6" />
             <span className="max-w-full truncate">{t[n.short]}</span>
           </button>
@@ -116,7 +116,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       </a>
 
       {/* desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 bg-forest px-4 py-6 text-white lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-6 bg-navy px-4 py-6 text-white lg:flex">
         <div className="px-1">
           <Wordmark onDark />
         </div>
@@ -174,7 +174,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       <BottomNav />
 
       <div aria-live="polite" role="status" className="pointer-events-none fixed inset-x-0 bottom-[72px] z-40 flex justify-center px-4 lg:bottom-6 lg:left-[232px]">
-        {toast && <p className="pointer-events-auto max-w-md animate-rise rounded-ctl bg-forest px-4 py-2.5 text-center text-[14px] text-white shadow-lg">{toast}</p>}
+        {toast && <p className="pointer-events-auto max-w-md animate-rise rounded-ctl bg-navy px-4 py-2.5 text-center text-[14px] text-white shadow-lg">{toast}</p>}
       </div>
     </div>
   );

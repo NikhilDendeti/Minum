@@ -10,6 +10,7 @@ import { Disclosure, Icon } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
 import { fmt, inr, shortDate } from "../lib/i18n";
 import { DEMO } from "../lib/landingData";
+import { CHART } from "../lib/theme";
 
 const REPO = "https://github.com/NikhilDendeti/Minum";
 const goDemo = () => {
@@ -23,7 +24,7 @@ const scrollToId = (id: string) => {
 
 function Section({ id, children, tone = "plain" }: { id?: string; children: ReactNode; tone?: "plain" | "soft" }) {
   return (
-    <section id={id} className={`scroll-mt-16 py-12 sm:py-24 ${tone === "soft" ? "bg-surface" : ""}`}>
+    <section id={id} className={`scroll-mt-16 py-12 sm:py-24 ${tone === "soft" ? "bg-panel" : ""}`}>
       <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10">{children}</div>
     </section>
   );
@@ -32,7 +33,7 @@ function Section({ id, children, tone = "plain" }: { id?: string; children: Reac
 function Heading({ title, sub, center = false }: { title: string; sub?: string; center?: boolean }) {
   return (
     <Reveal className={center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
-      <h2 className="text-[26px] font-semibold leading-tight tracking-tight text-forest sm:text-[34px]">{title}</h2>
+      <h2 className="text-[26px] font-semibold leading-tight tracking-tight text-navy sm:text-[34px]">{title}</h2>
       {sub && <p className="mt-3 text-[16px] text-muted sm:text-[17px]">{sub}</p>}
     </Reveal>
   );
@@ -87,7 +88,7 @@ function Header() {
       </div>
       <div
         ref={bar}
-        className="absolute inset-x-0 bottom-[-1px] h-0.5 origin-left bg-brand"
+        className="absolute inset-x-0 bottom-[-1px] h-0.5 origin-left bg-accent"
         style={{ transform: "scaleX(var(--p, 0))" }}
         aria-hidden
       />
@@ -103,10 +104,10 @@ function Hero() {
     <section className="overflow-hidden pb-16 pt-10 sm:pb-24 sm:pt-16">
       <div className="mx-auto grid w-full max-w-[1120px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-8 lg:px-10">
         <div>
-          <p className="hero-line text-[14px] font-medium text-brand" style={d(0)}>
+          <p className="hero-line text-[14px] font-medium text-accent-ink" style={d(0)}>
             {t.lpEyebrow}
           </p>
-          <h1 className="hero-line mt-3 text-[38px] font-semibold leading-[1.1] tracking-tight text-forest sm:text-[52px]" style={d(100)}>
+          <h1 className="hero-line mt-3 text-[38px] font-semibold leading-[1.1] tracking-tight text-navy sm:text-[52px]" style={d(100)}>
             {t.lpHeroTitle}
           </h1>
           <p className="hero-line mt-5 max-w-xl text-[17px] text-muted sm:text-[18px]" style={d(220)}>
@@ -124,7 +125,7 @@ function Hero() {
             {t.lpHeroNote}
           </p>
         </div>
-        <div className="hero-line" style={d(300)}>
+        <div className="hero-line rounded-[40px] bg-panel px-4 py-10 sm:px-10" style={d(300)}>
           <Phone className="lg:rotate-[1.5deg]">
             <HomeMini />
           </Phone>
@@ -148,7 +149,7 @@ function Problem() {
       <ol className="mt-10 grid gap-5 md:grid-cols-3">
         {items.map(([q, a], i) => (
           <Reveal as="li" key={q} delay={i * 120} className="relative border-l-2 border-brand pl-5">
-            <p className="text-[20px] font-semibold leading-snug text-forest">{q}</p>
+            <p className="text-[20px] font-semibold leading-snug text-navy">{q}</p>
             <p className="mt-2 text-[15px] text-muted">{a}</p>
           </Reveal>
         ))}
@@ -207,7 +208,7 @@ function HowItWorks() {
                   {i + 1}
                 </span>
                 <div className={`transition-opacity duration-500 ${active === i ? "lg:opacity-100" : "lg:opacity-40"}`}>
-                  <h3 className="text-[26px] font-semibold text-forest">
+                  <h3 className="text-[26px] font-semibold text-navy">
                     <span className="mr-2 text-brand lg:hidden">{i + 1}.</span>
                     {s.title}
                   </h3>
@@ -324,13 +325,13 @@ function CashDemo() {
           <ul className="mb-3 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
             <li className="flex items-center gap-2">
               <svg width="28" height="10" aria-hidden>
-                <line x1="1" y1="5" x2="27" y2="5" stroke="#173f35" strokeWidth="3" strokeDasharray="7 5" strokeLinecap="round" />
+                <line x1="1" y1="5" x2="27" y2="5" stroke={CHART.base} strokeWidth="3" strokeDasharray="7 5" strokeLinecap="round" />
               </svg>
               {t.legendBase}
             </li>
             <li className="flex items-center gap-2">
               <svg width="28" height="10" aria-hidden>
-                <line x1="1" y1="5" x2="27" y2="5" stroke="#1b7f8c" strokeWidth="3" strokeDasharray="1 6" strokeLinecap="round" />
+                <line x1="1" y1="5" x2="27" y2="5" stroke={CHART.credit} strokeWidth="3" strokeDasharray="1 6" strokeLinecap="round" />
               </svg>
               {t.legendCredit}
             </li>
@@ -344,7 +345,7 @@ function CashDemo() {
             {facts.map(([k, v], i) => (
               <Reveal key={k} delay={i * 100} className="flex items-baseline justify-between gap-4 px-4 py-3">
                 <dt className="text-[14px] text-muted">{k}</dt>
-                <dd className="num text-[18px] font-semibold text-forest">{v}</dd>
+                <dd className="num text-[18px] font-semibold text-navy">{v}</dd>
               </Reveal>
             ))}
           </dl>
@@ -364,7 +365,7 @@ function GrowDemo() {
         <div>
           <Heading title={t.lpGrowTitle} sub={t.lpGrowSub} />
           <Reveal delay={150} className="mt-8">
-            <p className="text-[64px] font-semibold leading-none tracking-tight text-forest sm:text-[80px]">
+            <p className="text-[64px] font-semibold leading-none tracking-tight text-navy sm:text-[80px]">
               <CountUp to={DEMO.growth.count} format={(n) => String(n)} />
             </p>
             <p className="mt-1 text-[16px]">{t.segment}</p>
@@ -423,7 +424,7 @@ function TrustItem({ title, body, delay }: { title: string; body: string; delay:
           <path d="M5 12.5l4.5 4.5L19 7.5" />
         </svg>
       </span>
-      <h3 className="mt-4 text-[18px] font-semibold text-forest">{title}</h3>
+      <h3 className="mt-4 text-[18px] font-semibold text-navy">{title}</h3>
       <p className="mt-1.5 text-[15px] text-muted">{body}</p>
     </li>
   );
@@ -443,7 +444,7 @@ function Voice() {
       <ul className="mt-10 grid gap-5 lg:grid-cols-3">
         {clips.map((c, i) => (
           <Reveal as="li" key={c.code} delay={i * 120} className={`card flex flex-col gap-3 p-5 ${c.code === lang ? "border-brand" : ""}`}>
-            <p className="text-[18px] font-semibold text-forest" lang={c.code}>
+            <p className="text-[18px] font-semibold text-navy" lang={c.code}>
               {c.native}
             </p>
             <p className="flex-1 text-[15px] leading-relaxed" lang={c.code}>
@@ -529,7 +530,7 @@ function Tech() {
       <ol className="mt-10 grid gap-3 md:grid-cols-4" lang="en">
         {nodes.map(([n, d], i) => (
           <Reveal as="li" key={n} delay={i * 110} className="card relative p-4">
-            <p className="font-semibold text-forest">{n}</p>
+            <p className="font-semibold text-navy">{n}</p>
             <p className="mt-1 text-[14px] text-muted">{d}</p>
             {i < nodes.length - 1 && (
               <span className="absolute -bottom-3 left-1/2 z-10 -translate-x-1/2 text-muted md:-right-3.5 md:bottom-auto md:left-auto md:top-1/2 md:-translate-y-1/2 md:translate-x-0" aria-hidden>
@@ -553,13 +554,13 @@ function Tech() {
 function FinalCta() {
   const { t } = useMunim();
   return (
-    <section className="bg-forest py-16 text-white sm:py-24">
+    <section className="bg-navy py-16 text-white sm:py-24">
       <div className="mx-auto max-w-[1120px] px-4 text-center sm:px-6 lg:px-10">
         <Reveal>
           <h2 className="mx-auto max-w-2xl text-[28px] font-semibold leading-tight tracking-tight sm:text-[38px]">{t.lpCtaTitle}</h2>
           <p className="mx-auto mt-3 max-w-xl text-[16px] text-white/80">{t.lpCtaSub}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <button className="btn min-h-[52px] bg-white px-6 text-[16px] text-forest hover:bg-canvas" onClick={goDemo}>
+            <button className="btn min-h-[52px] bg-white px-6 text-[16px] text-navy hover:bg-canvas" onClick={goDemo}>
               {t.lpTryDemo}
             </button>
             <a className="btn min-h-[52px] border border-white/40 px-6 text-[16px] text-white hover:bg-white/10" href={REPO} target="_blank" rel="noreferrer">

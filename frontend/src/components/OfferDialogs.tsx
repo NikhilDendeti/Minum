@@ -1,5 +1,5 @@
 import { useMunim } from "../hooks/useMunim";
-import { fmt, inr } from "../lib/i18n";
+import { fmt, inr, shortDate } from "../lib/i18n";
 import type { Offer } from "../types";
 import ConfirmDialog, { SummaryList } from "./ConfirmDialog";
 import { Notice } from "./ui";
@@ -85,6 +85,35 @@ export function CampaignDialog({
             { label: t.audience, value: fmt(t.audienceLine, { n: Number(p.reach) }) },
             { label: t.channel, value: channelLabel(p.channel, t) },
             { label: t.incentive, value: fmt(t.offerLine, { pct: Number(p.discount_pct), days: Number(p.valid_days) }) },
+          ]}
+        />
+        {approve && <Notice tone="info">{t.demoActionNote}</Notice>}
+      </div>
+    </ConfirmDialog>
+  );
+}
+
+export function StockDialog({ offer, decision, onClose }: { offer: Offer; decision: "approve" | "reject"; onClose: () => void }) {
+  const { t, lang } = useMunim();
+  const p = offer.payload;
+  const approve = decision === "approve";
+  return (
+    <ConfirmDialog
+      offer={offer}
+      decision={decision}
+      title={approve ? t.stockConfirmTitle : t.stockDeclineTitle}
+      confirmLabel={approve ? t.stockConfirmBtn : t.stockDeclineBtn}
+      approvedTitle={t.stockStatusSet}
+      successNote={t.stockSimNote}
+      onClose={onClose}
+    >
+      <div className="space-y-4">
+        <p className="text-[15px]">{approve ? t.stockConfirmIntro : t.stockDeclineIntro}</p>
+        <SummaryList
+          rows={[
+            { label: t.stockDay, value: shortDate(String(p.date), lang) },
+            { label: t.stockExpected, value: <span className="num font-semibold">{inr(Number(p.expected_sales))}</span> },
+            { label: t.stockTypical, value: <span className="num">{inr(Number(p.typical_sales))}</span> },
           ]}
         />
         {approve && <Notice tone="info">{t.demoActionNote}</Notice>}

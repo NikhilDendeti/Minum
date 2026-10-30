@@ -76,7 +76,7 @@ class Obligation(models.Model):
 
 
 class Offer(models.Model):
-    TYPES = [("credit", "credit"), ("promo", "promo")]
+    TYPES = [("credit", "credit"), ("promo", "promo"), ("stock", "stock")]
     STATUSES = [("proposed", "proposed"), ("approved", "approved"), ("rejected", "rejected"), ("sent", "sent")]
 
     merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE, related_name="offers")

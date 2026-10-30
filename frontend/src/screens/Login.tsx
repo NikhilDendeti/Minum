@@ -201,7 +201,7 @@ export default function Login() {
                   className="card flex min-h-[64px] w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:border-brand disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="min-w-0">
-                    <span className="block font-semibold text-forest">{a.name}</span>
+                    <span className="block font-semibold text-navy">{a.name}</span>
                     <span className="meta block">{a.city}</span>
                   </span>
                   <span className="num meta shrink-0">{a.phone}</span>

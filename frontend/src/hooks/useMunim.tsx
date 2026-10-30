@@ -260,6 +260,7 @@ export function MunimProvider({ children }: { children: ReactNode }) {
       const g = await api.growth();
       setGrowth(g);
       upsert(g.offer);
+      upsert(g.stock);
       setGrowthState("ready");
       mark("growth", true);
     } catch (e) {

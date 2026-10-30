@@ -89,10 +89,17 @@ def credit_offer_text(amount, tenure):
     return _all(lambda lang: i18n.t("credit_offer", lang, amount=fmt_inr(amount), tenure=tenure))
 
 
+def stock_text(day):
+    return _all(lambda lang: i18n.t("stock_offer", lang, wd=i18n.weekdays(lang)[date.fromisoformat(day["date"]).weekday()],
+                                    date=date_label(day["date"], lang), pct=round(day["uplift_pct"])))
+
+
 def confirmation(offer_type, approved, payload):
     def build(lang):
         if not approved:
             return i18n.t("confirm_no", lang)
+        if offer_type == "stock":
+            return i18n.t("confirm_stock", lang)
         if offer_type == "credit":
             return i18n.t("confirm_credit", lang, amount=fmt_inr(payload.get("amount", 0)))
         return i18n.t("confirm_promo", lang, n=payload.get("reach", 0))

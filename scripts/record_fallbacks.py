@@ -55,7 +55,7 @@ for merchant in Merchant.objects.order_by("id"):
         state = {"merchant_id": mid, "language": lang, "thread_id": ""}
         save(mid, "q_cash", run_cashflow(state)["answer_local"], lang)
         save(mid, "q_growth", run_growth(state)["answer_local"], lang)
-        for kind in ("promo", "credit"):
+        for kind in ("promo", "credit", "stock"):
             for approved in (True, False):
                 words = templates.confirmation(kind, approved, {"reach": 40, "amount": 30000})
                 save(mid, f"confirm_{kind}_{'yes' if approved else 'no'}", words[lang], lang)

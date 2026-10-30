@@ -105,7 +105,7 @@ export default function CashFlow() {
               <StatusLabel tone="forecast">{showCredit && !approved ? t.hypothetical : t.forecast}</StatusLabel>
             </div>
 
-            <p className={`mt-3 text-[20px] font-semibold leading-snug sm:text-[22px] ${first ? "text-forest" : "text-ok-fg"}`}>{headline}</p>
+            <p className={`mt-3 text-[20px] font-semibold leading-snug sm:text-[22px] ${first ? "text-navy" : "text-ok-fg"}`}>{headline}</p>
             <p className="mt-1 text-[15px]">{detail}</p>
             {approved && <p className="meta mt-1">{t.scenarioApprovedNote}</p>}
             {showCredit && !approved && <p className="meta mt-1">{t.scenarioHypotheticalNote}</p>}
@@ -184,7 +184,7 @@ export default function CashFlow() {
                 {declined && <StatusLabel tone="neutral">{t.statusDeclined}</StatusLabel>}
               </div>
               <div>
-                <p className="num text-[32px] font-semibold leading-none text-forest">{inr(amount!)}</p>
+                <p className="num text-[32px] font-semibold leading-none text-navy">{inr(amount!)}</p>
                 <p className="meta mt-1">{fmt(t.creditFor, { n: Number(offer.payload.tenure_days) })}</p>
               </div>
               {offer.payload.gap_date ? <p className="text-[14px]">{fmt(t.creditWhy, { date: shortDate(String(offer.payload.gap_date), lang) })}</p> : null}

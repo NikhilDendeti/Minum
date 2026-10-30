@@ -8,7 +8,7 @@ import ForecastDraw from "./ForecastDraw";
 /** A phone-shaped frame for the product screens. Purely illustrative, so it is hidden from assistive tech. */
 export function Phone({ children, className = "", tall = false }: { children: ReactNode; className?: string; tall?: boolean }) {
   return (
-    <div aria-hidden className={`mx-auto w-[286px] rounded-[36px] border-[9px] border-forest bg-canvas shadow-xl ${className}`}>
+    <div aria-hidden className={`mx-auto w-[286px] rounded-[36px] border-[9px] border-navy bg-canvas shadow-xl ${className}`}>
       <div className={`relative overflow-hidden rounded-[27px] bg-canvas ${tall ? "h-[540px]" : "min-h-[360px]"}`}>
         <div className="absolute left-1/2 top-2 h-1.5 w-16 -translate-x-1/2 rounded-full bg-line" />
         <div className="relative h-full px-3.5 pb-4 pt-7 text-[13px] leading-snug">{children}</div>
@@ -27,10 +27,10 @@ export function HomeMini() {
   const wd = weekdayName("2026-11-11", lang);
   return (
     <div className="space-y-2.5">
-      <p className="text-[17px] font-semibold text-forest">{t.greetEvening}</p>
+      <p className="text-[17px] font-semibold text-navy">{t.greetEvening}</p>
       <MiniCard>
         <p className="text-muted">{t.yesterdaySales}</p>
-        <p className="num mt-1 text-[28px] font-semibold leading-none text-forest">{inr(k.yesterday)}</p>
+        <p className="num mt-1 text-[28px] font-semibold leading-none text-navy">{inr(k.yesterday)}</p>
         <p className="mt-2 text-[12px]">
           <span className="mr-1 rounded-full border border-warn-line bg-warn-bg px-1.5 py-0.5 font-semibold text-warn-fg">▼ {Math.abs(k.delta_pct)}%</span>
           {fmt(t.compareDown, { amount: inr(k.baseline - k.yesterday), pct: Math.abs(k.delta_pct), weekday: wd, baseline: inr(k.baseline) })}
@@ -41,7 +41,7 @@ export function HomeMini() {
         </p>
       </MiniCard>
       <MiniCard className="border-l-4 border-l-warn-fg">
-        <p className="font-semibold text-forest">{fmt(t.cashMayRunShort, { date: shortDate(DEMO.forecast.gap.date, lang) })}</p>
+        <p className="font-semibold text-navy">{fmt(t.cashMayRunShort, { date: shortDate(DEMO.forecast.gap.date, lang) })}</p>
         <p className="mt-1 text-[12px]">{fmt(t.creditAvailable, { amount: inr(DEMO.forecast.offer.amount) })}</p>
       </MiniCard>
     </div>
@@ -53,7 +53,7 @@ export function AskMini() {
   const a = DEMO.ask[lang as keyof typeof DEMO.ask] ?? DEMO.ask["en-IN"];
   return (
     <div className="space-y-2.5">
-      <p className="text-[17px] font-semibold text-forest">{t.askTitle}</p>
+      <p className="text-[17px] font-semibold text-navy">{t.askTitle}</p>
       <div>
         <p className="text-muted">{t.youAsked}</p>
         <p className="font-medium">{a.q}</p>
@@ -75,9 +75,9 @@ export function CashMini({ play }: { play: boolean }) {
   const { t, lang } = useMunim();
   return (
     <div className="space-y-2.5">
-      <p className="text-[17px] font-semibold text-forest">{t.cashTitle}</p>
+      <p className="text-[17px] font-semibold text-navy">{t.cashTitle}</p>
       <MiniCard>
-        <p className="font-semibold text-forest">{fmt(t.cashMayRunShort, { date: shortDate(DEMO.forecast.gap.date, lang) })}</p>
+        <p className="font-semibold text-navy">{fmt(t.cashMayRunShort, { date: shortDate(DEMO.forecast.gap.date, lang) })}</p>
         <div className="-mx-1 mt-2">
           <ForecastDraw play={play} compact />
         </div>
@@ -85,7 +85,7 @@ export function CashMini({ play }: { play: boolean }) {
       </MiniCard>
       <MiniCard>
         <p className="text-muted">{t.creditOffer}</p>
-        <p className="num text-[22px] font-semibold text-forest">{inr(DEMO.forecast.offer.amount)}</p>
+        <p className="num text-[22px] font-semibold text-navy">{inr(DEMO.forecast.offer.amount)}</p>
       </MiniCard>
     </div>
   );
@@ -96,10 +96,10 @@ export function GrowMini() {
   const promo = DEMO.promo[lang as keyof typeof DEMO.promo] ?? DEMO.promo["en-IN"];
   return (
     <div className="space-y-2.5">
-      <p className="text-[17px] font-semibold text-forest">{t.growTitle}</p>
+      <p className="text-[17px] font-semibold text-navy">{t.growTitle}</p>
       <MiniCard>
         <p className="text-muted">{t.segment}</p>
-        <p className="num text-[30px] font-semibold leading-none text-forest">{DEMO.growth.count}</p>
+        <p className="num text-[30px] font-semibold leading-none text-navy">{DEMO.growth.count}</p>
       </MiniCard>
       <MiniCard>
         <p className="mb-1 text-muted">{t.previewTitle}</p>

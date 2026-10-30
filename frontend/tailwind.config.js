@@ -7,9 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        forest: { DEFAULT: v("forest"), soft: v("forest-soft") }, // deep ink: sidebar, headings on light
+        navy: { DEFAULT: v("navy"), soft: v("navy-soft") }, // the deck navy: sidebar, headings on light
         brand: { DEFAULT: v("brand"), hover: v("brand-hover"), tint: v("brand-tint") }, // the one primary action colour
+        accent: { DEFAULT: v("accent"), ink: v("accent-ink") }, // the deck cyan
         canvas: v("canvas"),
+        panel: v("panel"),
         surface: v("surface"),
         ink: v("ink"),
         muted: v("muted"),

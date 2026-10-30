@@ -64,7 +64,7 @@ def execute_node(state):
     offer.decided_via = state["decision"].get("via") or "tap"
     if state["approved"]:
         offer.save(update_fields=["decided_at", "decided_via"])
-        (executor.disburse_credit if offer.type == "credit" else executor.send_promo)(offer.id)
+        {"credit": executor.disburse_credit, "promo": executor.send_promo, "stock": executor.set_reminder}[offer.type](offer.id)
     else:
         offer.status = "rejected"
         offer.save(update_fields=["status", "decided_at", "decided_via"])

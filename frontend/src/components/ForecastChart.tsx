@@ -1,13 +1,12 @@
 import { useState } from "react";
+import { CHART } from "../lib/theme";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useMunim } from "../hooks/useMunim";
 import { inr, inrCompact, shortDate } from "../lib/i18n";
 import type { ScenarioDay } from "../lib/scenario";
 import { Disclosure, Icon } from "./ui";
 
-const BASE = "#173f35"; // forecast without credit
-const CREDIT = "#1b7f8c"; // hypothetical credit scenario
-const RISK = "#9b2c2c";
+const { base: BASE, credit: CREDIT, risk: RISK } = CHART;
 
 function Swatch({ dash, color }: { dash: string; color: string }) {
   return (
@@ -61,10 +60,10 @@ export default function ForecastChart({
       <div className="h-[260px] w-full sm:h-[320px]" role="img" aria-label={summary}>
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 16, right: 16, left: 0, bottom: 4 }}>
-            <CartesianGrid stroke="#e3e8e2" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#5f6963" }} tickLine={false} axisLine={{ stroke: "#c9d1ca" }} minTickGap={18} interval="preserveStartEnd" />
+            <CartesianGrid stroke={CHART.grid} vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: CHART.text }} tickLine={false} axisLine={{ stroke: CHART.axis }} minTickGap={18} interval="preserveStartEnd" />
             <YAxis
-              tick={{ fontSize: 12, fill: "#5f6963" }}
+              tick={{ fontSize: 12, fill: CHART.text }}
               tickLine={false}
               axisLine={false}
               width={56}
@@ -72,7 +71,7 @@ export default function ForecastChart({
               domain={["auto", "auto"]}
             />
             <Tooltip
-              cursor={{ stroke: "#8a958e", strokeDasharray: "3 3" }}
+              cursor={{ stroke: CHART.cursor, strokeDasharray: "3 3" }}
               content={({ active, payload, label }) =>
                 active && payload?.length ? (
                   <div className="rounded-ctl border border-line bg-surface p-3 text-[13px] shadow-md">

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAudio } from "../hooks/useAudio";
 import { useMunim } from "../hooks/useMunim";
 import * as audio from "../lib/audio";
@@ -9,24 +9,14 @@ import { Disclosure, Icon, Notice } from "./ui";
 export default function BriefingPlayer({ briefing }: { briefing: Briefing }) {
   const { t } = useMunim();
   const clip = useAudio(briefing.audio_url);
-  const [chime, setChime] = useState(false);
   const [textOpen, setTextOpen] = useState(!briefing.audio_url); // the transcript is open when there is no audio to listen to
-  const run = useRef(0); // bumped on stop so a chime that is still ringing does not start the clip afterwards
+  const chime = clip.chiming;
 
   const start = async () => {
-    const id = ++run.current;
     setTextOpen(true); // subtitles appear as soon as the briefing starts
-    setChime(true);
-    await audio.playChime();
-    if (run.current !== id) return;
-    setChime(false);
-    if (briefing.audio_url) await audio.playUrl(briefing.audio_url);
+    if (briefing.audio_url) await audio.playWithChime(briefing.audio_url);
   };
-  const stop = () => {
-    run.current++;
-    setChime(false);
-    clip.stop();
-  };
+  const stop = () => audio.stopAll();
 
   const playing = clip.status === "playing";
   const paused = clip.status === "paused";

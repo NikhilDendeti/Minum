@@ -30,7 +30,7 @@ function Proposal({ offer: initial }: { offer: Offer }) {
           </>
         )}
       </div>
-      <p className="num mt-2 font-semibold text-forest">{headline}</p>
+      <p className="num mt-2 font-semibold text-navy">{headline}</p>
       <p className="mt-1 text-[14px]">{String(p.text_local ?? "")}</p>
       {offer.status === "proposed" && (
         <div className="mt-3 flex flex-wrap gap-2">

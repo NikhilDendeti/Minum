@@ -6,10 +6,11 @@ export interface AudioSnapshot {
   status: AudioStatus;
   time: number;
   duration: number;
+  chiming: boolean; // the Soundbox chime is ringing, before a briefing starts
 }
 
 let el: HTMLAudioElement | null = null;
-let snap: AudioSnapshot = { url: null, status: "idle", time: 0, duration: 0 };
+let snap: AudioSnapshot = { url: null, status: "idle", time: 0, duration: 0, chiming: false };
 const listeners = new Set<() => void>();
 
 function set(next: Partial<AudioSnapshot>) {
@@ -77,6 +78,24 @@ export function stop() {
     el.currentTime = 0;
   }
   set({ url: null, status: "idle", time: 0, duration: 0 });
+}
+
+let chimeRun = 0; // bumped on stop so a chime still ringing does not start the clip afterwards
+
+/** The Soundbox flow: chime first, then the clip. Shared by the briefing button and the Soundbox panel. */
+export async function playWithChime(url: string) {
+  const id = ++chimeRun;
+  set({ chiming: true });
+  await playChime();
+  if (chimeRun !== id) return;
+  set({ chiming: false });
+  await playUrl(url);
+}
+
+export function stopAll() {
+  chimeRun++;
+  set({ chiming: false });
+  stop();
 }
 
 /** Short two-note Soundbox-style chime made with WebAudio (no asset needed). */

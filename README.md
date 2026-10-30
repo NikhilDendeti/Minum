@@ -58,12 +58,18 @@ Sign in with a mobile number and a one-time code. In demo mode the code is `1234
 | --- | --- | --- | --- |
 | Lakshmi Kirana, Hyderabad | 9876500001 | Telugu | the five planted stories |
 | Sharma Provision Store, Delhi | 9876500002 | Hindi | plain data, no cash gap |
+| Sai Ram Medicals, Mumbai (pharmacy) | 9876500003 | Hindi | big tickets, card-heavy, month-start peak, no cash gap |
+| Venkat Tiffins & Tea, Secunderabad | 9876500004 | Telugu | tiny tickets, breakfast rush, cash gap on day 8 and a credit offer |
+| Glow Unisex Salon, Bengaluru | 9876500005 | English | weekend-heavy, long gaps between visits, no cash gap |
+| Raju Fresh Vegetables, Hyderabad | 9876500006 | Telugu | early market hours, Sunday and festival spikes, cash gap on day 6 and a credit offer |
+
+Lakshmi and Sharma are generated exactly as before, so the planted stories never move; the other four exercise the product on data it was not tuned for. `python manage.py check_seed` (also run on every seed) checks every merchant: settlements balance, visit counts match transactions, ticket sizes and regular-customer shares sit in range, sales stay inside opening hours, and no customer is shared between merchants.
 
 Each merchant only ever sees their own data (every query is scoped to the session, and the agent's SQL is fenced by Postgres row-level security). Switch the language in the header (English, Hindi, Telugu); it changes the UI, spoken answers, offers and briefing, and is saved to the profile. Adding a language is one catalog file on each side (see `docs/IMPLEMENTATION_PLAN.md`, section 10).
 
 | Command | What it does |
 | --- | --- |
-| `make seed` / `make reset` | Regenerate data (about 4 s); `reset` also rebuilds the briefing |
+| `make seed` / `make reset` | Regenerate data for all six merchants (about 20 s); `reset` also rebuilds the briefing |
 | `make test` | Backend tests: stories, `run_sql` guard, voice words, grounding |
 | `make smoke` | Hits every endpoint in-process and checks the planted numbers |
 | `make record-fallbacks` | Record offline audio into `assets/fallback/` (run once while online) |

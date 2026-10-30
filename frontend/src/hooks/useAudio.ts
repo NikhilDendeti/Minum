@@ -14,5 +14,6 @@ export function useAudio(url: string | null | undefined) {
     pause: audio.pause,
     resume: audio.resume,
     stop: audio.stop,
+    chiming: snap.chiming,
   };
 }

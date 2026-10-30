@@ -20,7 +20,7 @@ from apps.core import seeding
 from apps.core.models import Conversation, Merchant, Offer
 from apps.speech import SpeechUnavailable, clip_key, synthesize, transcribe
 from apps.tools.forecast import forecast
-from apps.tools.offers import ensure_credit_offer, ensure_promo_offer
+from apps.tools.offers import ensure_credit_offer, ensure_promo_offer, ensure_stock_offer
 from apps.tools.segments import segment_customers
 
 from . import auth
@@ -242,7 +242,8 @@ def growth_view(request):
     offer = ensure_promo_offer(merchant.id, merchant.language)
     return Response({
         "segment": {k: segment[k] for k in ("name", "rule", "count", "avg_monthly_spend")},
-        "offer": serialize_offer(offer, merchant.language)})
+        "offer": serialize_offer(offer, merchant.language),
+        "stock": serialize_offer(ensure_stock_offer(merchant.id), merchant.language)})
 
 
 @api_view(["POST"])

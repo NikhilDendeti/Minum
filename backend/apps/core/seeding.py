@@ -10,7 +10,7 @@ from django.db import connection, transaction
 from django.db.models import Sum
 from django.db.models.functions import ExtractHour
 
-from . import seedgen
+from . import quality, seedgen
 from .demo_merchants import demo_merchants
 from .grants import grant_readonly
 from .models import Conversation, Customer, Merchant, Obligation, Offer, Settlement, Transaction
@@ -86,19 +86,22 @@ def _insert(p, data):
 def _calibrate(merchant, p, today, forecast):
     """R3/R4. Lakshmi: choose operating_cost_ratio so daily net inflow = 2,010 and cash_balance so the lowest balance
     is -12,800. The second shop just gets comfortable fixed values (no cash gap)."""
-    if not p.stories:
+    legacy = p.cash == "legacy"
+    if p.cash == "comfortable" or (legacy and not p.stories):
         merchant.operating_cost_ratio = Decimal("0.8000")
-        merchant.cash_balance = Decimal(30000)
+        merchant.cash_balance = Decimal(30000 if legacy else 6 * p.base_daily)  # far above any 14-day need: no gap
         merchant.save()
         return
+    target_net = settings.TARGET_DAILY_NET_INFLOW if legacy else p.daily_net
+    target_min = settings.TARGET_MIN_BALANCE if legacy else p.min_balance
     window = Settlement.objects.filter(merchant=merchant, date__gte=today - timedelta(days=90), date__lt=today)
     mean_net = float(window.aggregate(s=Sum("net"))["s"]) / window.count()
-    merchant.operating_cost_ratio = Decimal(str(round(1 - settings.TARGET_DAILY_NET_INFLOW / mean_net, 4)))
+    merchant.operating_cost_ratio = Decimal(str(round(1 - target_net / mean_net, 4)))
     merchant.cash_balance = Decimal(0)
     merchant.save()
     base = forecast.forecast(merchant.id, 14, today=today, merchant=merchant)
     lowest = min(d["balance"] for d in base["days"])
-    merchant.cash_balance = Decimal(settings.TARGET_MIN_BALANCE - lowest)
+    merchant.cash_balance = Decimal(target_min - lowest)
     merchant.save()
 
 
@@ -149,7 +152,20 @@ def verify(today, forecast, credit, profiles):
         if p.stories:
             continue
         fc = forecast.forecast(p.id, 14, today=today)
-        assert fc["gap"] is None and Transaction.objects.filter(merchant_id=p.id).count() > 5000, p.name
-        lines.append(f"Merchant {p.id} ({p.name}, {p.language}): {Transaction.objects.filter(merchant_id=p.id).count()} "
-                     f"transactions, no cash gap")
+        n = Transaction.objects.filter(merchant_id=p.id).count()
+        assert n > 5000, p.name
+        if p.cash == "tight":
+            gap = fc["gap"]
+            offer = credit.credit_eligibility(p.id, today=today)
+            assert gap and gap["first_negative_date"] == str(today + timedelta(days=p.supplier_due_days)), (p.name, gap)
+            assert abs(gap["min_balance"] - p.min_balance) <= 50 and offer["eligible"] and offer["amount"] > 0, (p.name, gap, offer)
+            outlook = f"cash gap on {gap['first_negative_date']} (min {gap['min_balance']}), credit offer {offer['amount']}"
+        else:
+            assert fc["gap"] is None, (p.name, fc["gap"])
+            outlook = "no cash gap"
+        lines.append(f"Merchant {p.id} ({p.name}, {p.language}): {n} transactions, {outlook}")
+
+    problems = quality.check(today, profiles)
+    assert not problems, "data quality failed:\n  - " + "\n  - ".join(problems)
+    lines.append(f"Quality: {len(profiles)} merchants pass every data-quality check")
     return lines

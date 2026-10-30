@@ -1,5 +1,6 @@
 import AskBox, { Suggestions } from "../components/AskBox";
 import BriefingPlayer from "../components/BriefingPlayer";
+import Soundbox from "../components/Soundbox";
 import { EmptyState, Icon, PageHeading, Skeleton, StatusLabel } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
 import { addDays, fmt, greetingKey, inr, longDate, shortDate, timeOfDay, weekdayName } from "../lib/i18n";
@@ -81,7 +82,7 @@ export default function Home() {
                 </StatusLabel>
               )}
             </div>
-            <p className="num mt-2 text-[34px] font-semibold leading-none tracking-tight text-forest sm:text-[40px]">{inr(k.yesterday)}</p>
+            <p className="num mt-2 text-[34px] font-semibold leading-none tracking-tight text-navy sm:text-[40px]">{inr(k.yesterday)}</p>
             <p className="mt-3 flex items-start gap-2 text-[15px]">
               <span className={`mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-semibold ${dir === "down" ? "border-warn-line bg-warn-bg text-warn-fg" : dir === "up" ? "border-ok-line bg-ok-bg text-ok-fg" : "border-line bg-canvas text-muted"}`}>
                 <span aria-hidden>{dir === "down" ? "▼" : dir === "up" ? "▲" : "●"}</span>
@@ -112,7 +113,7 @@ export default function Home() {
             {gap ? (
               <div className="card border-l-4 border-l-warn-fg p-4">
                 <StatusLabel tone="forecast">{t.forecast}</StatusLabel>
-                <p className="mt-2 text-[17px] font-semibold leading-snug text-forest">{fmt(t.cashMayRunShort, { date: shortDate(gap.first_negative_date, lang) })}</p>
+                <p className="mt-2 text-[17px] font-semibold leading-snug text-navy">{fmt(t.cashMayRunShort, { date: shortDate(gap.first_negative_date, lang) })}</p>
                 <p className="mt-1.5 text-[14px]">
                   {gap.driver
                     ? fmt(t.cashWhy, { shortfall: inr(gap.shortfall), label: gap.driver.label, amount: inr(gap.driver.amount), due: shortDate(gap.driver.due_on, lang) })
@@ -154,7 +155,7 @@ export default function Home() {
               <h2 id="grow-h" className="section-title">
                 {t.growthInsightTitle}
               </h2>
-              <p className="num mt-2 text-[28px] font-semibold leading-none text-forest">{k.lapsed_regulars}</p>
+              <p className="num mt-2 text-[28px] font-semibold leading-none text-navy">{k.lapsed_regulars}</p>
               <p className="mt-1 text-[14px]">{t.growthInsightBody}</p>
               <button className="btn-secondary mt-3 w-full sm:w-auto" onClick={() => setTab("grow")}>
                 {t.reviewOffer}
@@ -162,6 +163,9 @@ export default function Home() {
               </button>
             </section>
           )}
+          <div className="order-5">
+            <Soundbox briefing={briefing} />
+          </div>
         </div>
       </div>
     </div>

@@ -58,6 +58,7 @@ def _regular_visits(rng, days, today, p):
     """Return dict date -> list[regular index]; the first p.lapsed regulars stop visiting 14+ days before today."""
     start, end = days[0], days[-1]
     cutoff = today - timedelta(days=14)  # lapsed means last_seen < cutoff
+    gap_mean = p.gap_mean or REGULAR_GAP_MEAN
     visits = {d: [] for d in days}
     for r in range(p.regulars):
         lapsed = r < p.lapsed
@@ -66,7 +67,7 @@ def _regular_visits(rng, days, today, p):
         d, mine = first, []
         while d <= last:
             mine.append(d)
-            d += timedelta(days=int(rng.geometric(1 / REGULAR_GAP_MEAN)))
+            d += timedelta(days=int(rng.geometric(1 / gap_mean)))
         if not lapsed and (not mine or mine[-1] < cutoff):
             mine.append(cutoff + timedelta(days=int(rng.integers(0, (end - cutoff).days + 1))))
         for d in mine:
@@ -78,8 +79,9 @@ def generate(today, p):
     """p is a demo_merchants.Profile."""
     rng = np.random.default_rng(p.seed)
     end = today - timedelta(days=1)
-    start = end - timedelta(days=DAYS - 1)
-    days = [start + timedelta(days=i) for i in range(DAYS)]
+    n_days = p.days or DAYS
+    start = end - timedelta(days=n_days - 1)
+    days = [start + timedelta(days=i) for i in range(n_days)]
     visits = _regular_visits(rng, days, today, p)
 
     fits = {}
@@ -88,25 +90,29 @@ def generate(today, p):
         for d, t in zip([end - timedelta(days=7 * k) for k in range(1, 5)], WEDNESDAY_TARGETS):
             fits[d] = t
 
-    mu = math.log(MEAN_TICKET) - SIGMA ** 2 / 2
+    mean_ticket, sigma = p.mean_ticket or MEAN_TICKET, p.sigma or SIGMA
+    weekday_factor = p.weekday_factor or WEEKDAY_FACTOR
+    festivals = dict(p.festivals or ((FESTIVAL, FESTIVAL_FACTOR),))
+    mode_p = list(p.mode_p or (0.85, 0.10, 0.05))
+    mu = math.log(mean_ticket) - sigma ** 2 / 2
     modes = np.array(["upi", "card", "wallet"])
     rows = []  # dicts, date-ordered
     for d in days:
         reg = visits[d]
-        factor = WEEKDAY_FACTOR[d.weekday()] * (FESTIVAL_FACTOR if d == FESTIVAL else 1.0)
+        factor = weekday_factor[d.weekday()] * festivals.get(d, 1.0) * (1 + p.month_start_boost if d.day <= 5 else 1.0)
         target = p.base_daily * factor * rng.lognormal(0, 0.05)
-        n = max(int(round(target / MEAN_TICKET)), int(math.ceil(len(reg) / 0.8)), 30)
-        amounts = np.maximum(5, np.rint(rng.lognormal(mu, SIGMA, n))).astype(np.int64)
+        n = max(int(round(target / mean_ticket)), int(math.ceil(len(reg) / 0.8)), p.min_txns)
+        amounts = np.maximum(5, np.rint(rng.lognormal(mu, sigma, n))).astype(np.int64)
         if d in fits:
             amounts = fit_total(amounts, fits[d])
 
-        weights = HOUR_W_WEEKDAY if d.weekday() < 5 else HOUR_W_WEEKEND
+        weights = (p.hours_weekday or HOUR_W_WEEKDAY) if d.weekday() < 5 else (p.hours_weekend or HOUR_W_WEEKEND)
         hrs = np.array(sorted(weights))
         w = np.array([weights[h] for h in hrs], dtype=float)
         hours = rng.choice(hrs, size=n, p=w / w.sum())
         minutes = rng.integers(0, 60, n)
         seconds = rng.integers(0, 60, n)
-        mode = rng.choice(modes, size=n, p=[0.85, 0.10, 0.05])
+        mode = rng.choice(modes, size=n, p=mode_p)
         slots = rng.permutation(n)
         regular_for_slot = {int(s): r for s, r in zip(slots[: len(reg)], rng.permutation(reg))}
 
@@ -128,7 +134,7 @@ def generate(today, p):
             for amt in SETTLEMENT_STORY["refunds"]:
                 rows.append(dict(date=d, ts=datetime(d.year, d.month, d.day, int(rng.integers(9, 20)), int(rng.integers(0, 60)), 0, tzinfo=IST),
                                  amount=amt, reg=-2, mode="upi", status="refund"))
-        elif rng.random() < 0.10:
+        elif rng.random() < p.refund_p:
             rows.append(dict(date=d, ts=datetime(d.year, d.month, d.day, int(rng.integers(9, 20)), int(rng.integers(0, 60)), 0, tzinfo=IST),
                              amount=int(rng.integers(40, 300)), reg=-2, mode="upi", status="refund"))
 
@@ -175,7 +181,30 @@ def _settlements(rows, days, p):
     return out
 
 
+def _month_start(today, back):
+    y, m = today.year, today.month - back
+    while m < 1:
+        y, m = y - 1, m + 12
+    while m > 12:
+        y, m = y + 1, m - 12
+    return date(y, m, 1)
+
+
+def _generic_obligations(today, p):
+    """Rent every month, a supplier every six weeks or so, and the next supplier payment due in p.supplier_due_days."""
+    paid = [("Shop rent", p.rent, _month_start(today, k)) for k in range(1, 7)]
+    paid += [(p.supplier, int(round(p.supplier_amount * f, -2)), today - timedelta(days=d))
+             for f, d in ((0.9, 125), (0.95, 80), (1.0, 38))]
+    due = [(p.supplier, p.supplier_amount, today + timedelta(days=p.supplier_due_days), False),
+           ("Electricity bill", int(round(p.rent * 0.18, -2)), today + timedelta(days=11), False),
+           ("Shop rent", p.rent, _month_start(today, -1), False)]
+    return [dict(label=l, amount=a, due_on=d, paid=True) for l, a, d in paid] + \
+           [dict(label=l, amount=a, due_on=d, paid=pd) for l, a, d, pd in due]
+
+
 def _obligations(today, p):
+    if p.cash != "legacy":
+        return _generic_obligations(today, p)
     if p.stories:
         paid = [("Shop rent", 18000, date(2026, m, 1)) for m in (6, 7, 8, 9, 10, 11)]
         paid += [("Supplier payment - Sri Balaji Traders", a, d) for a, d in

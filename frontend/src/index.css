@@ -3,17 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --forest: #173f35;
-  --forest-soft: #24544a;
-  --brand: #236b50;
-  --brand-hover: #1b5a42;
-  --brand-tint: #e6f1ea;
-  --canvas: #f7f7f2;
+  --navy: #002868; /* the deck's navy: sidebar, headings, primary actions */
+  --navy-soft: #0b3f8f;
+  --brand: #002868;
+  --brand-hover: #001d4d;
+  --brand-tint: #e0f0f8;
+  --accent: #00b8f0; /* the deck's cyan: highlights and large accents, never small text on white */
+  --accent-ink: #0079a8; /* cyan dark enough for text and thin lines */
+  --canvas: #f8f8f8;
+  --panel: #eef7fb;
   --surface: #ffffff;
-  --ink: #202923;
-  --muted: #5f6963;
-  --line: #e3e8e2;
-  --line-strong: #8a958e; /* form-control borders: 3:1 against white */
+  --ink: #1b2433;
+  --muted: #566277;
+  --line: #dce5ee;
+  --line-strong: #7f8ca1; /* form-control borders: 3:1 against white */
   --ok-fg: #1d6b46;
   --ok-bg: #e7f3eb;
   --ok-line: #bcdcc8;
@@ -23,10 +26,10 @@
   --risk-fg: #9b2c2c;
   --risk-bg: #fbecec;
   --risk-line: #ebc3c3;
-  --fc-fg: #17606b;
-  --fc-bg: #e5f2f4;
-  --fc-line: #b5d7dc;
-  --focus: #1b6fd1;
+  --fc-fg: #00608a;
+  --fc-bg: #e0f3fa;
+  --fc-line: #a3d7ea;
+  --focus: #0072c6;
 }
 
 html {
@@ -97,10 +100,10 @@ html[lang="te-IN"] h3 {
     @apply min-h-[44px] w-full rounded-ctl border border-line-strong bg-surface px-3 py-2 text-base text-ink placeholder:text-muted;
   }
   .page-title {
-    @apply text-[22px] font-semibold leading-tight tracking-tight text-forest sm:text-[26px] lg:text-[28px];
+    @apply text-[22px] font-semibold leading-tight tracking-tight text-navy sm:text-[26px] lg:text-[28px];
   }
   .section-title {
-    @apply text-lg font-semibold text-forest;
+    @apply text-lg font-semibold text-navy;
   }
   .meta {
     @apply text-[13px] text-muted;

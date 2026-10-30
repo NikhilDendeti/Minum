@@ -2,6 +2,7 @@ import { useId } from "react";
 import { useMunim } from "../../hooks/useMunim";
 import { inrCompact, shortDate } from "../../lib/i18n";
 import { DEMO } from "../../lib/landingData";
+import { CHART } from "../../lib/theme";
 
 const W = 600;
 const H = 280;
@@ -11,9 +12,7 @@ const T = 18;
 const B = 30;
 const MIN = -20000;
 const MAX = 65000;
-const BASE = "#173f35";
-const CREDIT = "#1b7f8c";
-const RISK = "#9b2c2c";
+const { base: BASE, credit: CREDIT, risk: RISK } = CHART;
 
 /**
  * The real 14-day demo forecast, drawn left to right when `play` turns true: the baseline first, then the zero line and
@@ -47,9 +46,9 @@ export default function ForecastDraw({ play, compact = false }: { play: boolean;
 
       {ticks.map((v) => (
         <g key={v}>
-          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="#e3e8e2" />
+          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke={CHART.grid} />
           {v !== 0 && (
-            <text x={L - 8} y={y(v) + 4} textAnchor="end" fontSize={compact ? 13 : 12} fill="#5f6963">
+            <text x={L - 8} y={y(v) + 4} textAnchor="end" fontSize={compact ? 13 : 12} fill={CHART.text}>
               {inrCompact(v)}
             </text>
           )}
@@ -71,7 +70,7 @@ export default function ForecastDraw({ play, compact = false }: { play: boolean;
       <circle cx={x(gapIdx)} cy={y(days[gapIdx].balance)} r="6.5" fill={RISK} stroke="#fff" strokeWidth="2" className="fc-pop" style={{ ["--fc-delay" as string]: "1.5s" }} />
 
       {labelIdx.map((i) => (
-        <text key={i} x={x(i)} y={H - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize={compact ? 13 : 12} fill="#5f6963">
+        <text key={i} x={x(i)} y={H - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize={compact ? 13 : 12} fill={CHART.text}>
           {shortDate(days[i].date, lang)}
         </text>
       ))}

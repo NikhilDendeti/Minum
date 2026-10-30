@@ -26,7 +26,7 @@ export interface DemoAccount {
 
 export interface Offer {
   id: number;
-  type: "credit" | "promo";
+  type: "credit" | "promo" | "stock";
   status: "proposed" | "approved" | "rejected" | "sent";
   // credit: amount, tenure_days, basis, text_local   promo: discount_pct, valid_days, text_local, text_en, reach
   payload: Record<string, any>;
@@ -110,6 +110,7 @@ export interface Forecast {
 export interface Growth {
   segment: { name: string; rule: string; count: number; avg_monthly_spend: number };
   offer: Offer | null;
+  stock: Offer | null; // restock reminder: timing only, the data has no item or stock levels
 }
 
 export interface DecideResponse {

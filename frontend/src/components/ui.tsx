@@ -241,7 +241,7 @@ export function Dialog({
   // in a portal so no animated or transformed ancestor can trap it beneath the navigation
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
-      <div className="absolute inset-0 animate-fade bg-forest/50" onClick={() => !busy && onClose()} aria-hidden />
+      <div className="absolute inset-0 animate-fade bg-black/40" onClick={() => !busy && onClose()} aria-hidden />
       <div
         ref={ref}
         role="dialog"
