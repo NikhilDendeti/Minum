@@ -98,6 +98,7 @@ export default function Login() {
 
       {step === "phone" ? (
         <form onSubmit={sendCode} className="space-y-3" noValidate>
+          {demoAccounts.length > 0 && <Notice tone="info">{t.loginDemoOnly}</Notice>}
           <label className="block text-[15px] font-medium" htmlFor="phone">
             {t.phoneLabel}
           </label>

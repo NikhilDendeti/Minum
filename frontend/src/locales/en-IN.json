@@ -352,5 +352,6 @@
   "obShopRent": "Shop rent",
   "obElectricity": "Electricity bill",
   "obSupplier": "Supplier payment - {name}",
-  "creditLandsOn": "Credit added {date} (simulated)"
+  "creditLandsOn": "Credit added {date} (simulated)",
+  "loginDemoOnly": "Demo only. Only the demo merchants below can sign in; other numbers get no code."
 }
