@@ -1,5 +1,6 @@
-"""Prepare text for TTS. Hindi numbers become Devanagari words ("aath hazaar do sau"); Telugu keeps digits
-(commas removed) and relies on the speech provider's number normalisation."""
+"""Prepare text for TTS. Hindi numbers become Devanagari words ("aath hazaar do sau"); English amounts become words in the
+Indian system ("two lakh ninety-two thousand"); Telugu keeps digits (commas removed) and relies on the speech provider's
+number normalisation (Telugu number words are irregular enough that a mistake would be spoken in the demo)."""
 import re
 
 _HI = ("शून्य एक दो तीन चार पाँच छह सात आठ नौ दस ग्यारह बारह तेरह चौदह पंद्रह सोलह सत्रह अठारह उन्नीस बीस "
@@ -38,7 +39,43 @@ def _hindi(match):
     return out
 
 
+_EN_ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen "
+            "eighteen nineteen").split()
+_EN_TENS = "_ _ twenty thirty forty fifty sixty seventy eighty ninety".split()
+_RUPEES = re.compile(r"(?:Rs\.?|₹)\s?(\d[\d,]*)(?![\d,]|\.\d)")
+_BIG = re.compile(r"(?<![\w.,])(?:\d{1,3}(?:,\d{2,3})+|\d{4,})(?![\w,]|\.\d)")
+
+
+def english_words(n):
+    """Indian system: 292675 -> 'two lakh ninety-two thousand six hundred seventy-five'."""
+    n = int(n)
+    if n < 20:
+        return _EN_ONES[n]
+    if n < 100:
+        return _EN_TENS[n // 10] + (f"-{_EN_ONES[n % 10]}" if n % 10 else "")
+    parts = []
+    for size, name in ((10_000_000, "crore"), (100_000, "lakh"), (1000, "thousand"), (100, "hundred")):
+        q, n = divmod(n, size)
+        if q:
+            parts.append(f"{english_words(q)} {name}")
+    if n:
+        parts.append(english_words(n))
+    return " ".join(parts)
+
+
+def _english(text):
+    text = _RUPEES.sub(lambda m: f"{english_words(m.group(1).replace(',', ''))} rupees", text)
+
+    def big(m):
+        digits = m.group(0).replace(",", "")
+        return m.group(0) if "," not in m.group(0) and len(digits) == 4 and 1900 <= int(digits) <= 2100 else english_words(digits)  # a year
+
+    return _BIG.sub(big, text).replace("%", " percent")
+
+
 def speak_numbers(text, lang):
+    if lang.startswith("en"):
+        return _english(text)
     if lang == "hi-IN":
         return _NUMBER.sub(_hindi, text).replace("%", " प्रतिशत")
     if lang == "te-IN":

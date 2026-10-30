@@ -20,7 +20,7 @@ from apps.agents.cashflow import run_cashflow
 from apps.agents.growth import run_growth
 from apps.agents.insights import scripted_insight
 from apps.core import seeding
-from apps.speech.numbers import hindi_words, speak_numbers
+from apps.speech.numbers import english_words, hindi_words, speak_numbers
 from apps.tools import sql
 from apps.tools.credit import credit_eligibility
 from apps.tools.forecast import forecast
@@ -296,6 +296,15 @@ class MunimTests(TestCase):
         self.assertEqual(speak_numbers("1,420 रुपये", "hi-IN"), "एक हज़ार चार सौ बीस रुपये")
         self.assertEqual(speak_numbers("Rs 1,420", "te-IN"), "Rs 1420")
         self.assertEqual(fmt_inr(1234567), "12,34,567")
+        self.assertEqual(english_words(292675), "two lakh ninety-two thousand six hundred seventy-five")
+        self.assertEqual(speak_numbers("Rs 2,92,675 on Sundays, 12% more than 8 Nov. In 2026 Rs 8,200.", "en-IN"),
+                         "two lakh ninety-two thousand six hundred seventy-five rupees on Sundays, 12 percent more than 8 Nov. "
+                         "In 2026 eight thousand two hundred rupees.")
+        self.assertEqual(speak_numbers("1,420 short", "en-IN"), "one thousand four hundred twenty short")
+
+    def test_polish_regroups_western_amounts(self):
+        self.assertEqual(polish.polish("Sundays brought Rs 292,675 and 1,234,567 in all, Rs 8,200 on Wednesday."),
+                         "Sundays brought Rs 2,92,675 and 12,34,567 in all, Rs 8,200 on Wednesday.")
 
 
 @override_settings(READONLY_ALIAS="default", DEMO_MODE=True, **OFFLINE)

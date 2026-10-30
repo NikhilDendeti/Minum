@@ -11,6 +11,7 @@ from apps.tools.util import fmt_inr
 
 _ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 _MONEY = re.compile(r"(?P<pre>(?:Rs\.?|₹)\s?)(?P<n>\d{4,})(?![\d,]|\.\d)")
+_WESTERN = re.compile(r"(?<![\w,.\-])\d{1,3}(?:,\d{3}){2,}(?![\w,]|\.\d)|(?<![\w,.\-])\d{3},\d{3}(?![\w,]|\.\d)")  # 292,675 / 12,345,678
 _BARE = re.compile(r"(?<![\w,.\-])(?P<n>\d{4,})(?![\w,]|\.\d)")
 
 
@@ -30,6 +31,8 @@ def _bare(m):
 
 
 def polish(text):
+    """Regroup Western-style amounts (292,675 -> 2,92,675) and fix bare digits, dates and rupee amounts."""
     text = _ISO.sub(_day, text or "")
+    text = _WESTERN.sub(lambda m: fmt_inr(m.group(0).replace(",", "")), text)
     text = _MONEY.sub(lambda m: m["pre"] + fmt_inr(m["n"]), text)
     return _BARE.sub(_bare, text)
