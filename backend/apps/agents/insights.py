@@ -10,6 +10,7 @@ from apps.tools.settlement import explain_settlement
 from apps.tools.sql import SqlRejected, run_sql
 
 from . import grounding, llm, templates
+from .polish import polish
 
 log = logging.getLogger("munim.insights")
 MAX_ROUNDS = 5
@@ -96,4 +97,4 @@ def run_insights(state):
         break
     else:
         answer = templates.answer_other()["en"]
-    return {"tool_calls": calls, "answer_en": answer}
+    return {"tool_calls": calls, "answer_en": polish(answer)}

@@ -6,6 +6,7 @@ from django.conf import settings
 
 from apps.tools.sql import run_sql
 
+from . import grounding
 from .graph import config, get_graph
 
 # SQL equivalents shown for answers that are computed in Python (forecast, segment).
@@ -24,14 +25,31 @@ def _sql_evidence(merchant_id, sql, tool):
     return {"sql": sql, "rows": run_sql(merchant_id, sql)["rows"], "tool": tool}
 
 
+def _evidence_of(call):
+    result = call.get("result")
+    if call["name"] == "run_sql" and isinstance(result, dict) and "rows" in result:
+        return {"sql": call["args"].get("query", ""), "rows": result["rows"], "tool": "run_sql"}
+    if isinstance(result, dict) and result.get("evidence"):
+        return {**result["evidence"], "tool": call["name"]}
+    return None
+
+
+def _covered(evidence, answer_numbers):
+    """How many numbers of the answer appear in the evidence rows."""
+    shown = grounding.result_numbers(evidence["rows"])
+    return sum(1 for n in answer_numbers if any(abs(n - a) < 1e-6 or round(a) == n for a in shown))
+
+
 def build_evidence(merchant_id, values):
     calls = values.get("tool_calls") or []
-    for call in reversed(calls):
-        result = call.get("result")
-        if call["name"] == "run_sql" and isinstance(result, dict) and "rows" in result:
-            return {"sql": call["args"].get("query", ""), "rows": result["rows"], "tool": "run_sql"}
-        if isinstance(result, dict) and result.get("evidence"):
-            return {**result["evidence"], "tool": call["name"]}
+    answer_numbers = set(grounding.numbers_in(values.get("answer_en") or ""))
+    best, best_score = None, -1
+    for call in reversed(calls):  # latest first, so a tie goes to the latest call
+        evidence = _evidence_of(call)
+        if evidence is not None and _covered(evidence, answer_numbers) > best_score:
+            best, best_score = evidence, _covered(evidence, answer_numbers)
+    if best:
+        return best
     agent = values.get("agent")
     if agent == "cashflow":
         return _sql_evidence(merchant_id, _CASH_SQL, "forecast")

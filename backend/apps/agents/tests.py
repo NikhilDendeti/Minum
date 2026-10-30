@@ -3,6 +3,7 @@ scripted questions never call an LLM, and no speech provider is needed."""
 import tempfile
 from datetime import timedelta
 from pathlib import Path
+from unittest import mock
 
 from django.conf import settings
 from django.core.signals import request_finished
@@ -10,8 +11,8 @@ from django.db import close_old_connections, connection
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from apps import i18n
-from apps.agents import grounding, llm, voice_words
+from apps import i18n, speech
+from apps.agents import grounding, llm, polish, voice_words
 from apps.agents.ask import build_evidence, run_turn
 from apps.agents.cache import INTENTS, MATCH_ORDER, match_scripted
 from apps.agents.cashflow import run_cashflow
@@ -148,6 +149,48 @@ class MunimTests(TestCase):
         calls = [{"name": "x", "args": {}, "result": {"earned": 8200}}]
         self.assertEqual(grounding.ungrounded("You earned Rs 8,200.", calls), [])
         self.assertEqual(grounding.ungrounded("You earned Rs 9,100.", calls), [9100.0])
+
+    def test_list_numbers_are_not_flagged_as_invented(self):
+        calls = [{"name": "run_sql", "args": {}, "result": {"rows": [{"spend": 5851}, {"spend": 5821}], "row_count": 2}}]
+        answer = "Your top customers:\n1. Spent Rs 5,851\n2. Spent Rs 5,821"
+        self.assertEqual(grounding.ungrounded(answer, calls), [])
+        self.assertEqual(grounding.ungrounded("Spent Rs 9,999", calls), [9999.0])
+
+    def test_polish_formats_amounts_and_dates_only(self):
+        self.assertEqual(polish.polish("Best day was 2026-11-08 with Rs 12285."), "Best day was Sunday 8 Nov with Rs 12,285.")
+        self.assertEqual(polish.polish("Last month's sales were 300002."), "Last month's sales were 3,00,002.")
+        self.assertEqual(polish.polish("Rs 8,200 on 11 November 2026, 12.5% up, id 82db374ce5265341"),
+                         "Rs 8,200 on 11 November 2026, 12.5% up, id 82db374ce5265341")
+
+    def test_evening_story_is_available_to_the_agent(self):
+        k = kpi_summary(1, settings.DEMO_TODAY - timedelta(days=1))
+        self.assertTrue(33 <= k["evening_below_lunch_pct"] <= 40, k["evening_below_lunch_pct"])
+        self.assertEqual(k["lunch_window_label"], "11 am-1 pm")
+
+    def test_evidence_is_the_query_that_backs_the_answer(self):
+        sales = {"name": "run_sql", "args": {"query": "SELECT best_day"}, "result": {"rows": [{"day": "2026-11-08", "sales": 12285}], "row_count": 1}}
+        kpi = {"name": "kpi_summary", "args": {}, "result": {"evidence": {"sql": "SELECT kpi", "rows": [{"day": "2026-11-05", "earned": 8696}]}}}
+        values = {"tool_calls": [sales, kpi], "answer_en": "Best day was Sunday 8 Nov with Rs 12,285."}
+        self.assertEqual(build_evidence(1, values)["sql"], "SELECT best_day")
+
+    def test_spoken_replies_are_paid_for_once(self):
+        calls = []
+
+        class Fake:
+            @staticmethod
+            def synthesize(text, language, key=None):
+                calls.append(text)
+                return b"RIFFaudio", "wav"
+
+        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=Path(tmp), SPEECH_PROVIDER="sarvam"):
+            with mock.patch("apps.speech._provider", return_value=Fake):
+                first = speech.synthesize("Your settlement was short", "en-IN")
+                again = speech.synthesize("Your settlement was short", "en-IN")
+                other = speech.synthesize("Cash is low", "en-IN")
+                other_voice = speech.synthesize("Your settlement was short", "hi-IN")
+            self.assertEqual(first, again)
+            self.assertEqual(calls, ["Your settlement was short", "Cash is low", "Your settlement was short"])
+            self.assertTrue((Path(tmp) / "_tts_cache").is_dir())
 
     def test_graph_answers_settlement_question(self):
         values = run_turn(1, "Mera settlement kam kyun aaya?", "hi-IN")

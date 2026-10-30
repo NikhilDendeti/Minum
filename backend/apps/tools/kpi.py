@@ -32,6 +32,14 @@ def kpi_summary(merchant_id, day):
     slow = min(range(7, 20), key=lambda s: (h(s) + h(s + 1) + h(s + 2), s))
     peak = max(range(7, 21), key=lambda s: (h(s) + h(s + 1), -s))
 
+    # evening (6-9 pm) vs the 11 am-1 pm lunch peak, per-hour average over 90 weekdays: the story's own definition, and steadier than 28 days
+    hourly90 = {r["h"]: float(r["s"]) for r in
+                sales(ts__date__gte=day - timedelta(days=89), ts__date__lte=day, ts__week_day__in=WEEKDAYS)
+                .annotate(h=ExtractHour("ts")).values("h").annotate(s=Sum("amount")).values("h", "s")}
+    evening = sum(hourly90.get(x, 0.0) for x in (18, 19, 20)) / 3
+    lunch = sum(hourly90.get(x, 0.0) for x in (11, 12)) / 2
+    evening_below = round((1 - evening / lunch) * 100) if lunch else 0
+
     since = day - timedelta(days=89)
     total = float(sales(ts__date__gte=since, ts__date__lte=day).aggregate(s=Sum("amount"))["s"] or 0)
     regular = float(sales(ts__date__gte=since, ts__date__lte=day,
@@ -51,6 +59,9 @@ def kpi_summary(merchant_id, day):
         "peak_window_label": window_label(peak, peak + 2),
         "slow_window": f"{slow:02d}:00-{slow + 3:02d}:00",
         "slow_window_label": window_label(slow, slow + 3),
+        "evening_below_lunch_pct": evening_below,
+        "evening_window_label": window_label(18, 21),
+        "lunch_window_label": window_label(11, 13),
         "txn_count": sales(ts__date=day).count(),
         "repeat_share_pct": round(regular / total * 100) if total else 0,
         "lapsed_regulars": segment_customers(merchant_id, today=day + timedelta(days=1))["count"],

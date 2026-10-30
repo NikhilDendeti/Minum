@@ -5,10 +5,12 @@ _MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"
 _DATES = [re.compile(rf"\b\d{{1,2}}\s+{_MONTH}\b"), re.compile(rf"\b{_MONTH}\s+\d{{1,2}}\b"),
           re.compile(r"\b\d{4}-\d{2}-\d{2}\b")]
 _NUMBER = re.compile(r"\d[\d,]*(?:\.\d+)?")
+_LIST_MARK = re.compile(r"(?m)^\s*\d{1,2}[.)]\s+")  # "1. Ravi", "2) Asha"
 
 
 def numbers_in(text, strip_dates=True):
     if strip_dates:
+        text = _LIST_MARK.sub(" ", text)
         for pattern in _DATES:
             text = pattern.sub(" ", text)
     out = []

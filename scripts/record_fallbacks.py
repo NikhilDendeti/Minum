@@ -3,6 +3,8 @@
 Synthesizes each merchant's briefing and scripted answers with the configured live speech provider and saves
 them to assets/fallback/m<merchant>_<name>_<language>.<ext>, which SPEECH_PROVIDER=prerecorded then serves.
 By default only each merchant's own language is recorded; --all-languages records every registered language.
+--merchants 1,2 limits it to those merchant ids. Everything spoken is also saved in the speech cache, so the live app
+replays it for free.
 """
 import os
 import sys
@@ -44,7 +46,13 @@ def save(merchant_id, name, text, lang):
     print(f"saved  {key}.{ext}")
 
 
+only = None
+if "--merchants" in sys.argv:  # e.g. --merchants 1,2 records just the demo merchants
+    only = {int(x) for x in sys.argv[sys.argv.index("--merchants") + 1].split(",")}
+
 for merchant in Merchant.objects.order_by("id"):
+    if only is not None and merchant.id not in only:
+        continue
     langs = i18n.codes() if "--all-languages" in sys.argv else [merchant.language]
     for lang in langs:
         mid = merchant.id

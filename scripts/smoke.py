@@ -1,6 +1,6 @@
 """Smoke test: hits every API endpoint in-process (no server needed) and checks the planted numbers.
 
-Run after `seed_demo` and `generate_briefing`:  python scripts/smoke.py
+Run after `seed_demo` and `generate_briefing`:  python scripts/smoke.py   (add --live to use the real speech providers)
 """
 import os
 import sys
@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "munim.settings")
+if "--live" not in sys.argv:  # a smoke run speaks about a dozen replies: do not spend speech credits unless asked
+    os.environ["SPEECH_PROVIDER"] = "prerecorded"
 
 import django  # noqa: E402
 
