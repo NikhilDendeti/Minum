@@ -14,7 +14,7 @@ type Phase = "idle" | "starting" | "recording";
  * question cannot be sent while one is being answered.
  */
 export default function AskBox({ placeholder }: { placeholder?: string }) {
-  const { ask, asking, offline, t } = useMunim();
+  const { ask, asking, unsent, takeUnsent, offline, t } = useMunim();
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [seconds, setSeconds] = useState(0);
@@ -65,6 +65,14 @@ export default function AskBox({ placeholder }: { placeholder?: string }) {
   }, [phase]);
 
   useEffect(() => () => rec.current?.cancel(), []);
+
+  // a question that got no answer (timeout, error) goes back into the box so it can be sent again or edited;
+  // asking opens the Ask screen, so the box that sent it may be gone: the provider holds the text until a box takes it
+  useEffect(() => {
+    if (unsent === null) return;
+    setText((now) => now || unsent);
+    takeUnsent();
+  }, [unsent, takeUnsent]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

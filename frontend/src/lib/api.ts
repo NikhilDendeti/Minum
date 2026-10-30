@@ -11,21 +11,29 @@ export class ApiError extends Error {
   }
 }
 
+/** A question gets this long before the app gives up and says so. */
+export const ASK_TIMEOUT_MS = 20_000;
+
 export const UNAUTHENTICATED_EVENT = "munim:unauthenticated";
 export const REACHABLE_EVENT = "munim:reachable";
 
 const csrfToken = () => document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)?.[1] ?? "";
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, timeoutMs = 0): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   if (method !== "GET") headers.set("X-CSRFToken", csrfToken());
+  const abort = new AbortController();
+  const timer = timeoutMs ? window.setTimeout(() => abort.abort(), timeoutMs) : 0;
   let res: Response;
   try {
-    res = await fetch(path, { ...init, headers, credentials: "same-origin" });
+    res = await fetch(path, { ...init, headers, credentials: "same-origin", signal: abort.signal });
   } catch {
+    if (abort.signal.aborted) throw new ApiError("timeout", "The server took too long to answer."); // reachable, just slow
     window.dispatchEvent(new CustomEvent(REACHABLE_EVENT, { detail: false }));
     throw new ApiError("network", "Cannot reach the Munim server.");
+  } finally {
+    window.clearTimeout(timer);
   }
   window.dispatchEvent(new CustomEvent(REACHABLE_EVENT, { detail: true }));
   const body = await res.json().catch(() => null);
@@ -54,7 +62,7 @@ export const api = {
     request<Me>("/api/me", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language }) }),
   // --- app ---
   briefing: (lang?: Lang) => request<Briefing>(`/api/briefing${lang ? `?language=${lang}` : ""}`),
-  ask: (form: FormData) => request<AskResponse>("/api/ask", post(form)),
+  ask: (form: FormData) => request<AskResponse>("/api/ask", post(form), ASK_TIMEOUT_MS),
   forecast: () => request<Forecast>("/api/forecast"),
   growth: () => request<Growth>("/api/growth"),
   decide: (id: number, decision: "approve" | "reject", via: "tap" | "voice", message?: string) =>

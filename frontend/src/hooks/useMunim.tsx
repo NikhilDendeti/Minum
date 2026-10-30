@@ -33,6 +33,8 @@ interface Munim {
   briefingState: Load;
   thread: Turn[];
   asking: boolean;
+  unsent: string | null; // a typed question that got no answer; the ask box takes it back (see AskBox)
+  takeUnsent: () => void;
   forecast: Forecast | null;
   forecastState: Load;
   growth: Growth | null;
@@ -40,7 +42,7 @@ interface Munim {
   offers: Record<number, Offer>;
   suggestions: Suggestion[];
   toast: string | null;
-  ask: (input: Blob | string) => Promise<void>;
+  ask: (input: Blob | string) => Promise<boolean>; // true when an answer came back
   retryTurn: (id: string) => Promise<void>;
   decide: (
     offerId: number,
@@ -88,6 +90,7 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   const [briefingState, setBriefingState] = useState<Load>("loading");
   const [thread, setThread] = useState<Turn[]>([]);
   const [asking, setAsking] = useState(false);
+  const [unsent, setUnsent] = useState<string | null>(null);
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [forecastState, setForecastState] = useState<Load>("loading");
   const [growth, setGrowth] = useState<Growth | null>(null);
@@ -146,7 +149,13 @@ export function MunimProvider({ children }: { children: ReactNode }) {
 
   const errorText = useCallback(
     (e: unknown) =>
-      e instanceof ApiError ? (e.code === "network" ? stringsFor(lang).errorOffline : e.messageLocal ?? e.message) : stringsFor(lang).errorGeneric,
+      e instanceof ApiError
+        ? e.code === "network"
+          ? stringsFor(lang).errorOffline
+          : e.code === "timeout"
+            ? stringsFor(lang).errorTimeout
+            : e.messageLocal ?? e.message
+        : stringsFor(lang).errorGeneric,
     [lang],
   );
 
@@ -335,8 +344,8 @@ export function MunimProvider({ children }: { children: ReactNode }) {
 
   // --- ask / decide ---------------------------------------------------------------------------------------------
   const runTurn = useCallback(
-    async (id: string, input: Blob | string) => {
-      if (askingRef.current) return; // one question at a time: no accidental double submit
+    async (id: string, input: Blob | string): Promise<boolean> => {
+      if (askingRef.current) return false; // one question at a time: no accidental double submit
       askingRef.current = true;
       setAsking(true);
       setThread((prev) => prev.map((x) => (x.id === id ? { ...x, pending: true, error: undefined } : x)));
@@ -355,8 +364,11 @@ export function MunimProvider({ children }: { children: ReactNode }) {
         upsert(res.proposal);
         if (res.intent === "approval") void Promise.all([loadForecast(), loadGrowth()]);
         if (res.audio_url) void audio.playUrl(res.audio_url);
+        return true;
       } catch (e) {
         setThread((prev) => prev.map((x) => (x.id === id ? { ...x, pending: false, error: errorText(e) } : x)));
+        if (typeof input === "string") setUnsent(input);
+        return false;
       } finally {
         askingRef.current = false;
         setAsking(false);
@@ -366,15 +378,17 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   );
 
   const ask = useCallback(
-    async (input: Blob | string) => {
-      if (askingRef.current) return;
+    async (input: Blob | string): Promise<boolean> => {
+      if (askingRef.current) return false;
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       setThread((prev) => [...prev, { id, input, transcript: typeof input === "string" ? input : "", pending: true }]);
       setTab("ask");
-      await runTurn(id, input);
+      return runTurn(id, input);
     },
     [runTurn, setTab],
   );
+
+  const takeUnsent = useCallback(() => setUnsent(null), []);
 
   const retryTurn = useCallback(
     async (id: string) => {
@@ -422,11 +436,11 @@ export function MunimProvider({ children }: { children: ReactNode }) {
     () => ({
       authState, user, demoAccounts, requestOtp, login, loginDemo, logout, lang, t, setLanguage,
       offline, syncedAt, stale, retry,
-      tab, setTab, briefing, briefingState, thread, asking, forecast, forecastState, growth, growthState,
+      tab, setTab, briefing, briefingState, thread, asking, unsent, takeUnsent, forecast, forecastState, growth, growthState,
       offers, suggestions, toast, ask, retryTurn, decide, showToast, reset,
     }),
     [authState, user, demoAccounts, requestOtp, login, loginDemo, logout, lang, t, setLanguage, offline, syncedAt, stale, retry,
-      tab, setTab, briefing, briefingState, thread, asking, forecast, forecastState, growth, growthState, offers, suggestions,
+      tab, setTab, briefing, briefingState, thread, asking, unsent, takeUnsent, forecast, forecastState, growth, growthState, offers, suggestions,
       toast, ask, retryTurn, decide, showToast, reset],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

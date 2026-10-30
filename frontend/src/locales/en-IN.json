@@ -344,5 +344,8 @@
   "rowsOne": "{n} row",
   "rowsMany": "{n} rows",
   "queryOfTotal": "Query {n} of {total}",
-  "queryFailed": "This query failed, so it gave no rows: {error}"
+  "queryFailed": "This query failed, so it gave no rows: {error}",
+  "checkingData": "Munim is checking your data…",
+  "stillWorking": "Still working, large question…",
+  "errorTimeout": "This is taking too long. Please try again, or ask a shorter question. Your question is still in the box."
 }

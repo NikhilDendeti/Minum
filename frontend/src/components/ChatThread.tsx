@@ -5,7 +5,7 @@ import type { Offer, Turn } from "../types";
 import AudioControl from "./AudioControl";
 import Evidence from "./Evidence";
 import { CampaignDialog, CreditDialog } from "./OfferDialogs";
-import { Icon, Notice, SimulatedTag, Skeleton, Spinner, StatusLabel } from "./ui";
+import { Icon, Notice, SimulatedTag, Skeleton, StatusLabel } from "./ui";
 
 /** A proposal Munim made inside an answer. Nothing happens until the merchant reviews and confirms in the dialog. */
 function Proposal({ offer: initial }: { offer: Offer }) {
@@ -61,7 +61,11 @@ function Thinking() {
   return (
     <div role="status" className="space-y-3">
       <p className="flex items-center gap-2 text-muted">
-        <Spinner /> {slow ? t.slowNote : t.thinking}
+        <span className="relative flex h-3 w-3 shrink-0" aria-hidden>
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+          <span className="relative inline-flex h-3 w-3 animate-pulse rounded-full bg-brand" />
+        </span>
+        {slow ? t.stillWorking : t.checkingData}
       </p>
       <Skeleton className="h-4 w-4/5" />
       <Skeleton className="h-4 w-3/5" />

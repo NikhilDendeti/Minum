@@ -63,7 +63,7 @@ def run(today=None):
 def reset_demo(today=None):
     """Back to the opening state of the demo: reseed every merchant, empty offers and conversations, and rebuild the
     cached briefing (text + audio) for each merchant in their own language, and for the story merchant in every language."""
-    from apps.agents import briefing  # lazy: agents depend on models
+    from apps.agents import briefing, warm  # lazy: agents depend on models
 
     t0 = time.time()
     result = run(today)
@@ -72,6 +72,7 @@ def reset_demo(today=None):
         langs = i18n.codes() if merchant.id == STORY_MERCHANT else [merchant.language]
         for lang in dict.fromkeys([merchant.language, *langs]):
             briefing.generate(merchant.id, lang)
+    warm.warm_merchant(STORY_MERCHANT)  # opening offers + chip audio, so the first chip tap is as fast as the tenth
     return {"seeded": True, "seconds": round(time.time() - t0, 1), "stories": result["stories"]}
 
 

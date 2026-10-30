@@ -239,6 +239,31 @@ class MunimTests(TestCase):
             self.assertEqual(calls, ["Your settlement was short", "Cash is low", "Your settlement was short"])
             self.assertTrue((Path(tmp) / "_tts_cache").is_dir())
 
+    def test_chip_questions_are_warmed_and_return_real_evidence(self):
+        from apps.agents import warm
+        from apps.agents.cache import examples
+
+        spoken = []
+
+        class Fake:
+            @staticmethod
+            def synthesize(text, language, key=None):
+                spoken.append(text)
+                return b"RIFFaudio", "wav"
+
+        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=Path(tmp), SPEECH_PROVIDER="sarvam"):
+            with mock.patch("apps.speech._provider", return_value=Fake):
+                self.assertEqual(warm.warm_merchant(1), len(MATCH_ORDER) * len(i18n.codes()))
+                warmed = len(spoken)
+                client = login(LAKSHMI)
+                for lang in i18n.codes():
+                    client.patch("/api/me", {"language": lang}, format="json")
+                    for qid, question in examples(lang).items():
+                        body = client.post("/api/ask", {"text": question}, format="multipart").json()
+                        self.assertTrue(body["audio_url"], (qid, lang))
+                        self.assertTrue(body["evidence"]["sql"], "the SQL panel stays real")
+                self.assertEqual(len(spoken), warmed, "no chip needed a new synthesis after the warm-up")
+
     def test_graph_answers_settlement_question(self):
         values = run_turn(1, "Mera settlement kam kyun aaya?", "hi-IN")
         self.assertIn("1,420", values["answer_en"])
