@@ -8,7 +8,7 @@ import Home from "./screens/Home";
 import Landing from "./screens/Landing";
 import Login from "./screens/Login";
 
-// the cash screen carries the charting library, so it loads on demand and the landing page stays light
+// the cash ooscreen carries the charting library, so it loads on demand and the landing page stays light
 const CashFlow = lazy(() => import("./screens/CashFlow"));
 const screens = { home: Home, ask: Ask, cash: CashFlow, grow: Grow };
 const titleKey = { home: "navHome", ask: "navAsk", cash: "navCash", grow: "navGrow" } as const;
