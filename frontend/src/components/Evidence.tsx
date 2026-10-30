@@ -35,7 +35,7 @@ function QueryBlock({ query, index, total }: { query: EvidenceQuery; index: numb
   return (
     <div className="space-y-3">
       <div>
-        <p className="meta mb-1">{total > 1 ? fmt(t.queryOfTotal, { n: index + 1, total }) : t.queryRun}</p>
+        <p className="meta mb-1 font-medium">{total > 1 ? `${index + 1}. ${t.queryRun}` : t.queryRun}</p>
         <Sql sql={query.sql} />
       </div>
       <div>
@@ -92,7 +92,7 @@ export default function Evidence({ evidence }: { evidence: EvidenceData }) {
   if (!queries.length) return <p className="meta">{t.evidenceNone}</p>;
 
   const rowCount = queries.reduce((n, q) => n + (q.rows?.length ?? 0), 0);
-  const summary = `${fmt(queries.length === 1 ? t.queriesOne : t.queriesMany, { q: queries.length })}, ${fmt(rowCount === 1 ? t.rowsOne : t.rowsMany, { n: rowCount })}`;
+  const summary = `${fmt(queries.length === 1 ? t.queriesOne : t.queriesMany, { q: queries.length })} · ${fmt(rowCount === 1 ? t.rowsOne : t.rowsMany, { n: rowCount })}`;
 
   return (
     <div>
