@@ -3,12 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --navy: #002868; /* the deck's navy: sidebar, headings, primary actions */
-  --navy-soft: #0b3f8f;
-  --brand: #002868;
-  --brand-hover: #001d4d;
-  --brand-tint: #e0f0f8;
-  --accent: #00b8f0; /* the deck's cyan: highlights and large accents, never small text on white */
+  --navy: #002e6e; /* Paytm navy: sidebar, headings, text on the blue */
+  --navy-soft: #1a5aa8;
+  --brand: #00baf2; /* Paytm blue: primary actions and big bands */
+  --on-brand: #002e6e; /* text on Paytm blue: navy, because white on this blue is only 2.4:1 */
+  --brand-hover: #00a6da;
+  --brand-tint: #e0f4fc;
+  --accent: #00baf2; /* the deck's cyan: highlights and large accents, never small text on white */
   --accent-ink: #0079a8; /* cyan dark enough for text and thin lines */
   --canvas: #f8f8f8;
   --panel: #eef7fb;
@@ -85,7 +86,7 @@ html[lang="te-IN"] h3 {
     @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-ctl px-4 py-2 text-[15px] font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand text-white hover:bg-brand-hover;
+    @apply btn bg-brand text-brand-on hover:bg-brand-hover;
   }
   .btn-secondary {
     @apply btn border border-line-strong bg-surface text-ink hover:bg-canvas;

@@ -35,7 +35,7 @@ export function HomeMini() {
           <span className="mr-1 rounded-full border border-warn-line bg-warn-bg px-1.5 py-0.5 font-semibold text-warn-fg">▼ {Math.abs(k.delta_pct)}%</span>
           {fmt(t.compareDown, { amount: inr(k.baseline - k.yesterday), pct: Math.abs(k.delta_pct), weekday: wd, baseline: inr(k.baseline) })}
         </p>
-        <p className="mt-3 inline-flex items-center gap-1.5 rounded-[8px] bg-brand px-3 py-2 font-semibold text-white">
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-[8px] bg-brand px-3 py-2 font-semibold text-brand-on">
           <Icon name="play" className="h-3.5 w-3.5" />
           {t.hearBriefing}
         </p>
@@ -65,7 +65,7 @@ export function AskMini() {
           {t.listen}
         </p>
         <p className="mt-3 border-t border-line pt-2 text-muted">{fmt(t.evidenceMany, { n: DEMO.evidence.rows.length })}</p>
-        <p className="font-medium text-brand">{t.viewEvidence}</p>
+        <p className="font-medium text-navy">{t.viewEvidence}</p>
       </MiniCard>
     </div>
   );
@@ -104,7 +104,7 @@ export function GrowMini() {
       <MiniCard>
         <p className="mb-1 text-muted">{t.previewTitle}</p>
         <p className="rounded-[8px] border border-line bg-canvas p-2 text-[12.5px]">{promo}</p>
-        <p className="mt-3 rounded-[8px] bg-brand px-3 py-2 text-center font-semibold text-white">{t.approveSend}</p>
+        <p className="mt-3 rounded-[8px] bg-brand px-3 py-2 text-center font-semibold text-brand-on">{t.approveSend}</p>
       </MiniCard>
     </div>
   );

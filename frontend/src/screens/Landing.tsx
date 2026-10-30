@@ -5,6 +5,7 @@ import ForecastDraw from "../components/landing/ForecastDraw";
 import { CountUp, Reveal, useInView, useTyped } from "../components/landing/motion";
 import { AskMini, CashMini, GrowMini, HomeMini, Phone } from "../components/landing/PhoneScreens";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import IndiaFlag from "../components/IndiaFlag";
 import { Wordmark } from "../components/Shell";
 import { Disclosure, Icon } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
@@ -201,7 +202,7 @@ function HowItWorks() {
               >
                 <span
                   className={`absolute left-0 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border text-[14px] font-semibold transition-colors duration-300 lg:flex ${
-                    active >= i ? "border-brand bg-brand text-white" : "border-line-strong bg-surface text-muted"
+                    active >= i ? "border-brand bg-brand text-brand-on" : "border-line-strong bg-surface text-muted"
                   }`}
                   aria-hidden
                 >
@@ -209,7 +210,7 @@ function HowItWorks() {
                 </span>
                 <div className={`transition-opacity duration-500 ${active === i ? "lg:opacity-100" : "lg:opacity-40"}`}>
                   <h3 className="text-[26px] font-semibold text-navy">
-                    <span className="mr-2 text-brand lg:hidden">{i + 1}.</span>
+                    <span className="mr-2 text-navy lg:hidden">{i + 1}.</span>
                     {s.title}
                   </h3>
                   <p className="mt-2 max-w-md text-[16px] text-muted">{s.body}</p>
@@ -268,7 +269,7 @@ function AskDemo() {
               <p className="text-[17px] font-medium leading-relaxed">{a.a}</p>
             </div>
             <p className="meta mt-3">{fmt(t.evidenceMany, { n: rows.length })}</p>
-            <p className="mt-1 flex items-center gap-1 text-[14px] font-medium text-brand">
+            <p className="mt-1 flex items-center gap-1 text-[14px] font-medium text-navy">
               <Icon name="chevron" className={`h-4 w-4 transition-transform duration-300 ${showSql ? "rotate-180" : ""}`} />
               {showSql ? t.hideEvidence : t.viewEvidence}
             </p>
@@ -381,7 +382,7 @@ function GrowDemo() {
             </p>
           </div>
           <div aria-hidden className="mt-4 flex flex-wrap gap-2">
-            <span className="inline-flex min-h-[44px] items-center gap-2 rounded-ctl bg-brand px-4 text-[15px] font-semibold text-white">
+            <span className="inline-flex min-h-[44px] items-center gap-2 rounded-ctl bg-brand px-4 text-[15px] font-semibold text-brand-on">
               <Icon name="send" className="h-4 w-4" />
               {t.approveSend}
             </span>
@@ -504,7 +505,7 @@ function Story() {
       <ol className="relative mt-10 max-w-2xl space-y-6 border-l border-line-strong pl-8">
         {stories.map((s, i) => (
           <Reveal as="li" key={s} delay={i * 90} className="relative">
-            <span className="absolute -left-[45px] top-0 flex h-7 w-7 items-center justify-center rounded-full border border-brand bg-surface text-[13px] font-semibold text-brand" aria-hidden>
+            <span className="absolute -left-[45px] top-0 flex h-7 w-7 items-center justify-center rounded-full border border-brand bg-surface text-[13px] font-semibold text-navy" aria-hidden>
               {i + 1}
             </span>
             <p className="text-[16px]">{s}</p>
@@ -554,23 +555,67 @@ function Tech() {
 function FinalCta() {
   const { t } = useMunim();
   return (
-    <section className="bg-navy py-16 text-white sm:py-24">
+    <section className="bg-brand py-16 text-brand-on sm:py-24">
       <div className="mx-auto max-w-[1120px] px-4 text-center sm:px-6 lg:px-10">
         <Reveal>
           <h2 className="mx-auto max-w-2xl text-[28px] font-semibold leading-tight tracking-tight sm:text-[38px]">{t.lpCtaTitle}</h2>
-          <p className="mx-auto mt-3 max-w-xl text-[16px] text-white/80">{t.lpCtaSub}</p>
+          <p className="mx-auto mt-3 max-w-xl text-[16px] text-brand-on">{t.lpCtaSub}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <button className="btn min-h-[52px] bg-white px-6 text-[16px] text-navy hover:bg-canvas" onClick={goDemo}>
+            <button className="btn min-h-[52px] bg-white px-6 text-[16px] text-brand-on hover:bg-canvas" onClick={goDemo}>
               {t.lpTryDemo}
             </button>
-            <a className="btn min-h-[52px] border border-white/40 px-6 text-[16px] text-white hover:bg-white/10" href={REPO} target="_blank" rel="noreferrer">
+            <a className="btn min-h-[52px] border border-navy px-6 text-[16px] text-brand-on hover:bg-white/30" href={REPO} target="_blank" rel="noreferrer">
               {t.lpGithub}
             </a>
           </div>
         </Reveal>
-        <p className="mx-auto mt-14 max-w-2xl text-[13px] text-white/70">{t.lpFooter}</p>
       </div>
     </section>
+  );
+}
+
+function SiteFooter() {
+  const { t } = useMunim();
+  return (
+    <footer className="bg-navy text-white">
+      <div className="mx-auto max-w-[1120px] px-4 py-10 sm:px-6 sm:py-12 lg:px-10">
+        <div className="flex flex-wrap items-center justify-between gap-5">
+          <Wordmark onDark />
+          <div className="flex flex-wrap gap-2">
+            <button className="btn-primary min-h-[44px] py-1.5 text-[14px]" onClick={goDemo}>
+              {t.lpTryDemo}
+            </button>
+            <a className="btn min-h-[44px] border border-white/40 py-1.5 text-[14px] text-white hover:bg-white/10" href={REPO} target="_blank" rel="noreferrer">
+              {t.lpGithub}
+            </a>
+          </div>
+        </div>
+
+        <p className="mt-8 flex items-start gap-3 text-[22px] font-semibold leading-snug sm:text-[26px]">
+          <IndiaFlag className="mt-1.5 h-[22px] w-[33px] sm:h-6 sm:w-9" label={t.lpFlagLabel} />
+          {t.lpMadeFor}
+        </p>
+
+        <ul className="mt-6 flex flex-col gap-2 border-t border-white/20 pt-6 text-[14px] text-white/85 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
+          {[
+            <span key="c" className="inline-flex items-center gap-2">
+              <IndiaFlag className="h-3.5 w-[21px]" />
+              {t.lpCrafted}
+            </span>,
+            <span key="t">{t.lpTeam}</span>,
+            <span key="l">
+              <span lang="en">English</span> · <span lang="hi">हिन्दी</span> · <span lang="te">తెలుగు</span>
+            </span>,
+          ].map((item, i) => (
+            <li key={i} className="sm:[&:not(:first-child)]:before:mr-3 sm:[&:not(:first-child)]:before:content-['·']">
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-4 max-w-3xl text-[13px] text-white/75">{t.lpDisclaimer}</p>
+      </div>
+    </footer>
   );
 }
 
@@ -592,6 +637,7 @@ export default function Landing() {
         <Tech />
       </main>
       <FinalCta />
+      <SiteFooter />
     </div>
   );
 }

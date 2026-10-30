@@ -49,7 +49,7 @@ export default function LanguageSwitcher({ variant = "segmented", onDark = false
             title={asking ? t.langBusy : undefined}
             onClick={() => void setLanguage(o.code)}
             className={`min-h-[36px] flex-1 rounded-[8px] px-2 text-[13px] font-medium transition-colors duration-150 disabled:cursor-not-allowed ${
-              active ? (onDark ? "bg-white text-navy" : "bg-brand text-white") : onDark ? "text-white/85 hover:bg-white/10" : "text-ink hover:bg-canvas"
+              active ? (onDark ? "bg-white text-navy" : "bg-brand text-brand-on") : onDark ? "text-white/85 hover:bg-white/10" : "text-ink hover:bg-canvas"
             }`}
           >
             {o.native}

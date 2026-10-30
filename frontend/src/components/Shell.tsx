@@ -69,7 +69,7 @@ function BottomNav() {
             key={n.id}
             onClick={() => setTab(n.id)}
             aria-current={active ? "page" : undefined}
-            className={`relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 px-1 text-[12px] font-medium ${active ? "text-brand" : "text-muted"}`}
+            className={`relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 px-1 text-[12px] font-medium ${active ? "text-navy" : "text-muted"}`}
           >
             {active && <span className="absolute inset-x-6 top-0 h-0.5 rounded-b bg-accent" aria-hidden />}
             <Icon name={n.icon} className="h-6 w-6" />

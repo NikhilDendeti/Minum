@@ -1,6 +1,6 @@
 // Colours that SVG and chart libraries need as literal values. They mirror the CSS variables in index.css.
 export const CHART = {
-  base: "#002868", // forecast without credit (navy, dashed)
+  base: "#002E6E", // forecast without credit (navy, dashed)
   credit: "#0086b8", // hypothetical credit scenario (cyan, dotted; darkened so thin lines pass 3:1 on white)
   risk: "#9b2c2c",
   grid: "#dce5ee",

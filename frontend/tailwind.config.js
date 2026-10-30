@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         navy: { DEFAULT: v("navy"), soft: v("navy-soft") }, // the deck navy: sidebar, headings on light
-        brand: { DEFAULT: v("brand"), hover: v("brand-hover"), tint: v("brand-tint") }, // the one primary action colour
+        brand: { DEFAULT: v("brand"), on: v("on-brand"), hover: v("brand-hover"), tint: v("brand-tint") }, // the one primary action colour
         accent: { DEFAULT: v("accent"), ink: v("accent-ink") }, // the deck cyan
         canvas: v("canvas"),
         panel: v("panel"),

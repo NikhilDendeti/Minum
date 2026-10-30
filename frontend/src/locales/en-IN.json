@@ -311,7 +311,6 @@
   "lpCtaTitle": "See it work on a day at the shop",
   "lpCtaSub": "Sign in with a demo merchant. No sign-up and no real data.",
   "lpGithub": "View the code",
-  "lpFooter": "Munim · Team Versa · Track 1: Merchant Growth AI. A prototype for a Paytm merchant, not an official Paytm product. All data is synthetic.",
   "lpBack": "Back to overview",
   "soundboxName": "Soundbox",
   "soundboxIdle": "Idle",
@@ -330,5 +329,10 @@
   "stockDeclineIntro": "Nothing will be set.",
   "stockDeclineBtn": "Skip reminder",
   "stockStatusSet": "Reminder set (simulated)",
-  "stockSimNote": "Demo action: the reminder is marked as set, but nothing was ordered and no supplier was contacted."
+  "stockSimNote": "Demo action: the reminder is marked as set, but nothing was ordered and no supplier was contacted.",
+  "lpMadeFor": "Made for India's merchants, in their own language.",
+  "lpFlagLabel": "Flag of India",
+  "lpCrafted": "Crafted in India",
+  "lpTeam": "Team Versa · Paytm AI Hackathon · Track 1: Merchant Growth AI",
+  "lpDisclaimer": "A prototype built for a Paytm merchant. Not an official Paytm product, and Paytm does not own or endorse it. All data is synthetic."
 }

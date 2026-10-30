@@ -18,7 +18,7 @@ function Segmented({ value, onChange, options, label }: { value: Scenario; onCha
           aria-checked={value === o.id}
           onClick={() => onChange(o.id)}
           className={`min-h-[44px] flex-1 rounded-[8px] px-3 text-[14px] font-medium transition-colors duration-150 sm:flex-none ${
-            value === o.id ? "bg-brand text-white" : "text-ink hover:bg-canvas"
+            value === o.id ? "bg-brand text-brand-on" : "text-ink hover:bg-canvas"
           }`}
         >
           {o.label}
