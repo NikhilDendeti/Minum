@@ -79,6 +79,10 @@ export default function Login() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-4 py-6 sm:py-12">
+      <button className="btn-quiet -ml-3 w-fit" onClick={() => (window.location.hash = "/")}>
+        <Icon name="chevron" className="h-4 w-4 rotate-90" />
+        {t.lpBack}
+      </button>
       <header className="flex items-center justify-between gap-3">
         <Wordmark />
         <LanguageSwitcher variant="select" />

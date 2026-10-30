@@ -9,7 +9,7 @@ const KEYWORD =
 const TOKEN = new RegExp(`(${KEYWORD.source}|'[^']*'|\\b\\d+(?:\\.\\d+)?\\b)`, "gi");
 
 /** Colours the query for reading. The text itself is untouched: what is shown is exactly what ran. */
-function Sql({ sql }: { sql: string }) {
+export function Sql({ sql }: { sql: string }) {
   return (
     <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-ctl bg-forest p-3 font-mono text-[12.5px] leading-relaxed text-[#e4efe8]" lang="en" tabIndex={0}>
       {sql.split(TOKEN).map((part, i) => {
