@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ElementType, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ElementType, type ReactNode } from "react";
 
 // Scroll motion for the landing page. Everything here is progressive: with reduced motion, no IntersectionObserver, or
 // before hydration, content simply shows in its final state. Only opacity and transform are ever animated.
@@ -47,17 +47,19 @@ export function Reveal({
   );
 }
 
-/** Counts from 0 to `to` once when it scrolls into view. The final figure is always the real one. */
+/** Counts up to `to` once when it scrolls into view. It shows the real figure until then (a page that is captured, printed
+ * or read before the observer fires must never say 0), and starts the count from 0 only when it comes into view. */
 export function CountUp({ to, format, ms = 1100 }: { to: number; format: (n: number) => string; ms?: number }) {
   const [ref, seen] = useInView<HTMLSpanElement>(0.5);
-  const [value, setValue] = useState(prefersReducedMotion() ? to : 0);
-  useEffect(() => {
+  const [value, setValue] = useState(to);
+  useLayoutEffect(() => {
     if (!seen || prefersReducedMotion()) {
-      if (seen) setValue(to);
+      setValue(to);
       return;
     }
     let raf = 0;
     const start = performance.now();
+    setValue(0); // before paint, so the real figure is never seen for a frame and then replaced
     const tick = (now: number) => {
       const p = Math.min(1, (now - start) / ms);
       const eased = 1 - Math.pow(1 - p, 3);
