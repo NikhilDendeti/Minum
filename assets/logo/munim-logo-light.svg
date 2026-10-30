@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 232 64" width="232" height="64" role="img" aria-label="Munim">
+  <title>Munim</title>
+  <!-- for dark backgrounds: white tile, navy and cyan M, white wordmark -->
+  <rect width="64" height="64" rx="15" fill="#FFFFFF"/>
+  <path d="M17 46V20L32 38" fill="none" stroke="#002868" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 38L47 20V46" fill="none" stroke="#00B8F0" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="80" y="45" font-family="Inter, 'Segoe UI', Roboto, Arial, sans-serif" font-size="40" font-weight="600" letter-spacing="-1" fill="#FFFFFF">Munim</text>
+</svg>

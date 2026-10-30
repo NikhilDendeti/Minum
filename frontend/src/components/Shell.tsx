@@ -3,6 +3,7 @@ import { useMunim } from "../hooks/useMunim";
 import { timeOfDay } from "../lib/i18n";
 import type { Tab } from "../types";
 import LanguageSwitcher from "./LanguageSwitcher";
+import LogoMark from "./Logo";
 import { Icon, Notice, type IconName } from "./ui";
 
 const NAV: { id: Tab; icon: IconName; short: "home" | "ask" | "cash" | "grow"; long: "navHome" | "navAsk" | "navCash" | "navGrow" }[] = [
@@ -16,7 +17,8 @@ const demoMode = new URLSearchParams(window.location.search).get("demo") === "1"
 
 export function Wordmark({ onDark = false }: { onDark?: boolean }) {
   return (
-    <span className={`text-xl font-semibold tracking-tight ${onDark ? "text-white" : "text-navy"}`} lang="en">
+    <span className={`inline-flex items-center gap-2 text-xl font-semibold tracking-tight ${onDark ? "text-white" : "text-navy"}`} lang="en">
+      <LogoMark className="h-7 w-7" />
       Munim
     </span>
   );

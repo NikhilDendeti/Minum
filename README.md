@@ -1,4 +1,4 @@
-# Munim
+<img src="assets/logo/munim-logo.svg" alt="Munim" height="56">
 
 **A voice-first AI business partner for a Paytm merchant.** Munim speaks a daily briefing in the merchant's language, answers questions from her own transaction data (every number traceable to a SQL query on screen), forecasts cash flow and offers pre-approved credit *before* a gap, and proposes growth actions that only run after she says yes.
 
