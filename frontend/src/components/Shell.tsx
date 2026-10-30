@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { useMunim } from "../hooks/useMunim";
+import { demoMode } from "../lib/demo";
 import { timeOfDay } from "../lib/i18n";
 import type { Tab } from "../types";
 import LanguageSwitcher from "./LanguageSwitcher";
 import LogoMark from "./Logo";
+import ResetDemo from "./ResetDemo";
 import { Icon, Notice, type IconName } from "./ui";
 
 const NAV: { id: Tab; icon: IconName; short: "home" | "ask" | "cash" | "grow"; long: "navHome" | "navAsk" | "navCash" | "navGrow" }[] = [
@@ -13,7 +15,6 @@ const NAV: { id: Tab; icon: IconName; short: "home" | "ask" | "cash" | "grow"; l
   { id: "grow", icon: "people", short: "grow", long: "navGrow" },
 ];
 
-const demoMode = new URLSearchParams(window.location.search).get("demo") === "1";
 
 export function Wordmark({ onDark = false }: { onDark?: boolean }) {
   return (
@@ -105,7 +106,7 @@ function OfflineBanner() {
 }
 
 export default function Shell({ children }: { children: ReactNode }) {
-  const { user, logout, reset, toast, t } = useMunim();
+  const { user, logout, toast, t } = useMunim();
   if (!user) return null;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
@@ -138,11 +139,7 @@ export default function Shell({ children }: { children: ReactNode }) {
               {t.logout}
             </button>
           </div>
-          {demoMode && (
-            <button onClick={() => void reset()} className="text-left text-[12px] text-white/60 underline">
-              reset demo data
-            </button>
-          )}
+          {demoMode && <ResetDemo className="inline-flex min-h-[44px] items-center gap-1.5 text-left text-[13px] text-white/70 underline" />}
         </div>
       </aside>
 
@@ -169,6 +166,7 @@ export default function Shell({ children }: { children: ReactNode }) {
               <Icon name="logout" className="h-4 w-4" />
               {t.logout}
             </button>
+            {demoMode && <ResetDemo />}
           </footer>
         </main>
       </div>

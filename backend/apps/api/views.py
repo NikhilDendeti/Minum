@@ -311,12 +311,11 @@ def suggestions(request):
 
 
 @api_view(["POST"])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def reset(request):
-    merchant = _merchant(request)
+    """Back to the opening state of the demo. Open without a session (the login screen offers it) but only in DEMO_MODE."""
     if not settings.DEMO_MODE:
-        return fail(403, "forbidden", "Reset is only available when DEMO_MODE=true.", merchant.language)
-    result = seeding.run()
-    # only the caller's briefing is rebuilt now (keeps reset near 10 s); other merchants' are built on first use
-    me_now = Merchant.objects.get(pk=merchant.id)
-    briefing_mod.generate(me_now.id, me_now.language)
-    return Response({"seeded": True, "seconds": result["seconds"], "stories": result["stories"]})
+        return fail(403, "forbidden", "Reset is only available when DEMO_MODE=true.")
+    result = seeding.reset_demo()
+    return Response({"seeded": True, "seconds": result["seconds"]})

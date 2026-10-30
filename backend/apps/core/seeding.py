@@ -10,6 +10,8 @@ from django.db import connection, transaction
 from django.db.models import Sum
 from django.db.models.functions import ExtractHour
 
+from apps import i18n
+
 from . import quality, seedgen
 from .demo_merchants import demo_merchants
 from .grants import grant_readonly
@@ -56,6 +58,21 @@ def run(today=None):
     clear_media()
     stories = verify(today, forecast, credit, profiles)
     return {"seconds": round(time.time() - t0, 1), "stories": stories}
+
+
+def reset_demo(today=None):
+    """Back to the opening state of the demo: reseed every merchant, empty offers and conversations, and rebuild the
+    cached briefing (text + audio) for each merchant in their own language, and for the story merchant in every language."""
+    from apps.agents import briefing  # lazy: agents depend on models
+
+    t0 = time.time()
+    result = run(today)
+    clear_runtime_state()  # run() already truncated both; kept explicit so a future change to run() cannot leave rows behind
+    for merchant in Merchant.objects.order_by("id"):
+        langs = i18n.codes() if merchant.id == STORY_MERCHANT else [merchant.language]
+        for lang in dict.fromkeys([merchant.language, *langs]):
+            briefing.generate(merchant.id, lang)
+    return {"seeded": True, "seconds": round(time.time() - t0, 1), "stories": result["stories"]}
 
 
 def _insert(p, data):

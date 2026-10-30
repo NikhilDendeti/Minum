@@ -331,5 +331,9 @@
   "lpFlagLabel": "Flag of India",
   "lpCrafted": "Crafted in India",
   "lpTeam": "Team Versa · Paytm AI Hackathon · Track 1: Merchant Growth AI",
-  "lpDisclaimer": "A prototype built for a Paytm merchant. Not an official Paytm product, and Paytm does not own or endorse it. All data is synthetic."
+  "lpDisclaimer": "A prototype built for a Paytm merchant. Not an official Paytm product, and Paytm does not own or endorse it. All data is synthetic.",
+  "resetDemo": "Reset demo",
+  "resetting": "Resetting…",
+  "resetDone": "Demo reset. Back to the start.",
+  "resetFailed": "Could not reset the demo. Try again."
 }

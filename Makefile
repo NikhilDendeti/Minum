@@ -39,7 +39,9 @@ smoke:
 test:
 	cd backend && ../$(PY) manage.py test apps
 
-reset: seed briefing
+# back to the start of the demo: reseed, drop offers/conversations, rebuild briefings (same as POST /api/reset)
+reset:
+	cd backend && ../$(PY) manage.py reset_demo
 
 record-fallbacks:
 	$(PY) scripts/record_fallbacks.py

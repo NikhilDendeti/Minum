@@ -401,17 +401,22 @@ export function MunimProvider({ children }: { children: ReactNode }) {
     try {
       await api.reset();
       audio.stop();
-      setUser(await api.me()); // the reset restores each merchant's seeded language
-      setThread([]);
-      setOffers({});
-      setForecast(null);
-      setGrowth(null);
-      await refreshAll();
-      setTab("home");
+      if (authed) {
+        setUser(await api.me()); // the reset restores each merchant's seeded language
+        setThread([]);
+        setOffers({});
+        setForecast(null);
+        setGrowth(null);
+        await refreshAll();
+        setTab("home");
+      } else {
+        setDemoAccounts(await api.demoAccounts());
+      }
+      showToast(stringsFor(lang).resetDone);
     } catch (e) {
-      showToast(errorText(e));
+      showToast(e instanceof ApiError && e.code !== "network" ? stringsFor(lang).resetFailed : errorText(e));
     }
-  }, [errorText, refreshAll, setTab, showToast]);
+  }, [authed, errorText, lang, refreshAll, setTab, showToast]);
 
   const value = useMemo<Munim>(
     () => ({
