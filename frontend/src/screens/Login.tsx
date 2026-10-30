@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import ResetDemo from "../components/ResetDemo";
+import Toast from "../components/Toast";
 import { Wordmark } from "../components/Shell";
 import { Icon, Notice, Spinner } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
@@ -211,9 +212,10 @@ export default function Login() {
               </li>
             ))}
           </ul>
-          <ResetDemo className="btn-secondary min-h-[44px] w-full text-[14px]" />
+          <ResetDemo className="btn-quiet -ml-3 min-h-[44px] text-[14px] underline" />
         </section>
       )}
+      <Toast />
     </div>
   );
 }

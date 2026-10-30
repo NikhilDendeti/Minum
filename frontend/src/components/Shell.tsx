@@ -6,6 +6,7 @@ import type { Tab } from "../types";
 import LanguageSwitcher from "./LanguageSwitcher";
 import LogoMark from "./Logo";
 import ResetDemo from "./ResetDemo";
+import Toast from "./Toast";
 import { Icon, Notice, type IconName } from "./ui";
 
 const NAV: { id: Tab; icon: IconName; short: "home" | "ask" | "cash" | "grow"; long: "navHome" | "navAsk" | "navCash" | "navGrow" }[] = [
@@ -106,7 +107,7 @@ function OfflineBanner() {
 }
 
 export default function Shell({ children }: { children: ReactNode }) {
-  const { user, logout, toast, t } = useMunim();
+  const { user, logout, t } = useMunim();
   if (!user) return null;
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
@@ -173,9 +174,7 @@ export default function Shell({ children }: { children: ReactNode }) {
 
       <BottomNav />
 
-      <div aria-live="polite" role="status" className="pointer-events-none fixed inset-x-0 bottom-[72px] z-40 flex justify-center px-4 lg:bottom-6 lg:left-[232px]">
-        {toast && <p className="pointer-events-auto max-w-md animate-rise rounded-ctl bg-navy px-4 py-2.5 text-center text-[14px] text-white shadow-lg">{toast}</p>}
-      </div>
+      <Toast inShell />
     </div>
   );
 }

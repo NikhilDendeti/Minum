@@ -50,7 +50,7 @@ interface Munim {
     via: "tap" | "voice",
     opts?: { voice?: Blob; message?: string },
   ) => Promise<DecideResponse>;
-  showToast: (text: string) => void;
+  showToast: (text: string, ms?: number) => void;
   reset: () => Promise<void>;
 }
 
@@ -68,14 +68,27 @@ const tabFromHash = (): Tab => {
   return TABS.includes(h) ? h : "home";
 };
 
+// One store decides the language everywhere: localStorage. The sidebar radio, the phone select and every screen read the
+// same value; the server's copy (which words the briefing and offers) is brought in line with it, never the other way round
+// except at sign-in, where the merchant's own language is adopted.
 const LANG_KEY = "munim_lang";
-const savedLang = (): Lang => {
+const storedLang = (): Lang | null => {
   try {
-    const stored = localStorage.getItem(LANG_KEY);
-    if (stored) return stored;
+    return localStorage.getItem(LANG_KEY);
+  } catch {
+    return null; // storage can be unavailable
+  }
+};
+const storeLang = (code: Lang) => {
+  try {
+    localStorage.setItem(LANG_KEY, code);
   } catch {
     /* storage can be unavailable */
   }
+};
+const initialLang = (): Lang => {
+  const stored = storedLang();
+  if (stored) return stored;
   const nav = navigator.language?.slice(0, 2);
   return nav === "hi" ? "hi-IN" : nav === "te" ? "te-IN" : DEFAULT_LANG;
 };
@@ -84,7 +97,8 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<Auth>("checking");
   const [user, setUser] = useState<Me | null>(null);
   const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([]);
-  const [loginLang, setLoginLang] = useState<Lang>(savedLang);
+  const [lang, setLangState] = useState<Lang>(initialLang);
+  const langRef = useRef(lang);
   const [tab, setTabState] = useState<Tab>(tabFromHash);
   const [briefing, setBriefing] = useState<Briefing | null>(null);
   const [briefingState, setBriefingState] = useState<Load>("loading");
@@ -106,8 +120,22 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   const askingRef = useRef(false);
 
   const authed = authState === "authed" && user !== null;
-  const lang: Lang = user?.language ?? loginLang;
   const t = stringsFor(lang);
+  const adoptLang = useCallback((code: Lang) => {
+    langRef.current = code;
+    storeLang(code);
+    setLangState(code);
+  }, []);
+  /** Make the server's copy of the language match the one the screen shows. */
+  const syncServerLang = useCallback(async (me: Me): Promise<Me> => {
+    const want = langRef.current;
+    if (me.language === want || !me.languages.some((l) => l.code === want)) return me;
+    try {
+      return await api.setLanguage(want);
+    } catch {
+      return me;
+    }
+  }, []);
   const offline = !browserOnline || !reachable;
 
   useEffect(() => {
@@ -141,10 +169,10 @@ export function MunimProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const showToast = useCallback((text: string) => {
+  const showToast = useCallback((text: string, ms = 5000) => {
     setToast(text);
     window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 5000);
+    toastTimer.current = window.setTimeout(() => setToast(null), ms);
   }, []);
 
   const errorText = useCallback(
@@ -180,8 +208,10 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     api
       .me()
-      .then((me) => {
-        setUser(me);
+      .then(async (me) => {
+        const synced = storedLang() ? await syncServerLang(me) : me; // a saved choice wins; a first visit takes the merchant's language
+        adoptLang(synced.language);
+        setUser(synced);
         setAuthState("authed");
       })
       .catch(() => {
@@ -204,9 +234,10 @@ export function MunimProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (phone: string, otp: string) => {
     const me = await api.verify(phone, otp);
+    adoptLang(me.language); // signing in as a merchant shows that merchant's own language
     setUser(me);
     setAuthState("authed");
-  }, []);
+  }, [adoptLang]);
 
   const loginDemo = useCallback(
     async (phone: string) => {
@@ -321,13 +352,8 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   // --- language -------------------------------------------------------------------------------------------------
   const setLanguage = useCallback(
     async (next: Lang) => {
-      if (next === lang) return;
-      try {
-        localStorage.setItem(LANG_KEY, next);
-      } catch {
-        /* storage can be unavailable */
-      }
-      setLoginLang(next);
+      if (next === langRef.current) return;
+      adoptLang(next);
       if (!authed) return;
       try {
         const me = await api.setLanguage(next);
@@ -339,7 +365,7 @@ export function MunimProvider({ children }: { children: ReactNode }) {
         showToast(errorText(e));
       }
     },
-    [authed, errorText, lang, refreshAll, showToast],
+    [adoptLang, authed, errorText, refreshAll, showToast],
   );
 
   // --- ask / decide ---------------------------------------------------------------------------------------------
@@ -416,7 +442,7 @@ export function MunimProvider({ children }: { children: ReactNode }) {
       await api.reset();
       audio.stop();
       if (authed) {
-        setUser(await api.me()); // the reset restores each merchant's seeded language
+        setUser(await syncServerLang(await api.me())); // the reset restores the seeded language; the screen's choice wins
         setThread([]);
         setOffers({});
         setForecast(null);
@@ -426,11 +452,11 @@ export function MunimProvider({ children }: { children: ReactNode }) {
       } else {
         setDemoAccounts(await api.demoAccounts());
       }
-      showToast(stringsFor(lang).resetDone);
+      showToast(stringsFor(lang).resetDone, 2000);
     } catch (e) {
       showToast(e instanceof ApiError && e.code !== "network" ? stringsFor(lang).resetFailed : errorText(e));
     }
-  }, [authed, errorText, lang, refreshAll, setTab, showToast]);
+  }, [authed, errorText, lang, refreshAll, setTab, showToast, syncServerLang]);
 
   const value = useMemo<Munim>(
     () => ({
