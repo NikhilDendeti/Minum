@@ -13,7 +13,6 @@ import { fmt, inr, shortDate } from "../lib/i18n";
 import { DEMO } from "../lib/landingData";
 import { CHART } from "../lib/theme";
 
-const REPO = "https://github.com/NikhilDendeti/Minum";
 const goDemo = () => {
   window.location.hash = "/login";
   window.scrollTo({ top: 0 });
@@ -564,9 +563,6 @@ function FinalCta() {
             <button className="btn min-h-[52px] bg-white px-6 text-[16px] text-brand-on hover:bg-canvas" onClick={goDemo}>
               {t.lpTryDemo}
             </button>
-            <a className="btn min-h-[52px] border border-navy px-6 text-[16px] text-brand-on hover:bg-white/30" href={REPO} target="_blank" rel="noreferrer">
-              {t.lpGithub}
-            </a>
           </div>
         </Reveal>
       </div>
@@ -585,9 +581,6 @@ function SiteFooter() {
             <button className="btn-primary min-h-[44px] py-1.5 text-[14px]" onClick={goDemo}>
               {t.lpTryDemo}
             </button>
-            <a className="btn min-h-[44px] border border-white/40 py-1.5 text-[14px] text-white hover:bg-white/10" href={REPO} target="_blank" rel="noreferrer">
-              {t.lpGithub}
-            </a>
           </div>
         </div>
 
