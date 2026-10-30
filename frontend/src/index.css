@@ -3,35 +3,134 @@
 @tailwind utilities;
 
 :root {
-  --paytm-blue: #00baf2;
-  --navy: #002e6e;
-  --bg: #fbfcfe;
-  --ink: #3d4a5c;
+  --forest: #173f35;
+  --forest-soft: #24544a;
+  --brand: #236b50;
+  --brand-hover: #1b5a42;
+  --brand-tint: #e6f1ea;
+  --canvas: #f7f7f2;
+  --surface: #ffffff;
+  --ink: #202923;
+  --muted: #5f6963;
+  --line: #e3e8e2;
+  --line-strong: #8a958e; /* form-control borders: 3:1 against white */
+  --ok-fg: #1d6b46;
+  --ok-bg: #e7f3eb;
+  --ok-line: #bcdcc8;
+  --warn-fg: #7a4b00;
+  --warn-bg: #fbf1dc;
+  --warn-line: #e8cf98;
+  --risk-fg: #9b2c2c;
+  --risk-bg: #fbecec;
+  --risk-line: #ebc3c3;
+  --fc-fg: #17606b;
+  --fc-bg: #e5f2f4;
+  --fc-line: #b5d7dc;
+  --focus: #1b6fd1;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
 }
-
 body {
   margin: 0;
-  background: #e9eef5;
+  background: var(--canvas);
   color: var(--ink);
-  font-family: Inter, "DM Sans", "Noto Sans Telugu", "Noto Sans Devanagari", system-ui, sans-serif;
+  font-family: Inter, "Noto Sans Telugu", "Noto Sans Devanagari", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+/* Indic scripts need more line height or the matras and vowel signs collide. */
+html[lang="hi-IN"] body,
+html[lang="te-IN"] body {
+  line-height: 1.7;
+}
+html[lang="hi-IN"] h1,
+html[lang="hi-IN"] h2,
+html[lang="hi-IN"] h3,
+html[lang="te-IN"] h1,
+html[lang="te-IN"] h2,
+html[lang="te-IN"] h3 {
+  line-height: 1.4;
 }
 
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: none;
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+::selection {
+  background: var(--brand-tint);
 }
 
-details > summary {
-  list-style: none;
-  cursor: pointer;
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
-details > summary::-webkit-details-marker {
-  display: none;
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-surface;
+  }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-ctl px-4 py-2 text-[15px] font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-hover;
+  }
+  .btn-secondary {
+    @apply btn border border-line-strong bg-surface text-ink hover:bg-canvas;
+  }
+  .btn-quiet {
+    @apply btn px-3 font-medium text-brand hover:bg-brand-tint;
+  }
+  .btn-danger {
+    @apply btn border border-risk-line bg-surface text-risk-fg hover:bg-risk-bg;
+  }
+  .field {
+    @apply min-h-[44px] w-full rounded-ctl border border-line-strong bg-surface px-3 py-2 text-base text-ink placeholder:text-muted;
+  }
+  .page-title {
+    @apply text-[22px] font-semibold leading-tight tracking-tight text-forest sm:text-[26px] lg:text-[28px];
+  }
+  .section-title {
+    @apply text-lg font-semibold text-forest;
+  }
+  .meta {
+    @apply text-[13px] text-muted;
+  }
+}
+
+/* Motion is only used to explain state changes, and switches off when the user asks for less of it. */
+.page-enter {
+  animation: rise 180ms ease-out backwards;
+}
+.disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease-out;
+}
+.disclosure[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.disclosure > div {
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

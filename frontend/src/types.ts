@@ -80,6 +80,7 @@ export interface AskResponse {
 export interface Turn {
   id: string;
   transcript: string;
+  input: Blob | string; // kept so a failed question can be retried
   pending: boolean;
   error?: string;
   response?: AskResponse;

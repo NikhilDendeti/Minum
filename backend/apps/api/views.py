@@ -28,6 +28,7 @@ from .serializers import serialize_conversation, serialize_merchant, serialize_o
 
 log = logging.getLogger("munim.api")
 MAX_AUDIO_BYTES = 5 * 1024 * 1024
+MAX_MESSAGE_CHARS = 300
 SESSION_DAYS = 7
 
 
@@ -271,6 +272,12 @@ def decide(request, offer_id):
             return fail(400, "bad_decision", "decision must be 'approve' or 'reject'", lang)
 
     if offer.status == "proposed":
+        # the merchant may have reworded a promo before approving it: keep the wording that was actually approved
+        message = (request.data.get("message") or "").strip()[:MAX_MESSAGE_CHARS]
+        if message and offer.type == "promo" and decision == "approve":
+            by_lang = {**offer.payload.get("text_by_lang", {}), merchant.language: message}
+            offer.payload = {**offer.payload, "text_by_lang": by_lang}
+            offer.save(update_fields=["payload"])
         values = decide_offer(offer, decision == "approve", via=via, transcript=transcript, language=lang)
         offer.refresh_from_db()
         words_en, words_local = values["confirmation_en"], values["confirmation_local"]

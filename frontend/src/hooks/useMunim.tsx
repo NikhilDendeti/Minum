@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ApiError, UNAUTHENTICATED_EVENT, api } from "../lib/api";
+import { ApiError, REACHABLE_EVENT, UNAUTHENTICATED_EVENT, api } from "../lib/api";
 import * as audio from "../lib/audio";
 import { DEFAULT_LANG, stringsFor, type Strings } from "../lib/i18n";
 import type { AskResponse, Briefing, DecideResponse, DemoAccount, Forecast, Growth, Lang, Me, Offer, Suggestion, Tab, Turn } from "../types";
 
 type Load = "loading" | "ready" | "error";
 type Auth = "checking" | "anon" | "authed";
+type Resource = "briefing" | "forecast" | "growth";
 
 interface Munim {
   // auth
@@ -20,6 +21,11 @@ interface Munim {
   lang: Lang;
   t: Strings;
   setLanguage: (lang: Lang) => Promise<void>;
+  // connection: "offline" means the browser is offline or the last request could not reach the server
+  offline: boolean;
+  syncedAt: Partial<Record<Resource, number>>; // when each data set was last loaded successfully (ms)
+  stale: (r: Resource) => boolean; // shown data is older than the last attempt to refresh it
+  retry: () => Promise<void>;
   // app
   tab: Tab;
   setTab: (tab: Tab) => void;
@@ -32,15 +38,16 @@ interface Munim {
   growth: Growth | null;
   growthState: Load;
   offers: Record<number, Offer>;
-  audioState: "idle" | "playing";
   suggestions: Suggestion[];
   toast: string | null;
-  error: string | null;
   ask: (input: Blob | string) => Promise<void>;
-  decide: (offerId: number, decision: "approve" | "reject", via: "tap" | "voice", voice?: Blob) => Promise<DecideResponse>;
-  playBriefing: (withChime?: boolean) => Promise<void>;
-  loadForecast: () => Promise<void>;
-  loadGrowth: () => Promise<void>;
+  retryTurn: (id: string) => Promise<void>;
+  decide: (
+    offerId: number,
+    decision: "approve" | "reject",
+    via: "tap" | "voice",
+    opts?: { voice?: Blob; message?: string },
+  ) => Promise<DecideResponse>;
   showToast: (text: string) => void;
   reset: () => Promise<void>;
 }
@@ -52,6 +59,12 @@ export function useMunim() {
   if (!ctx) throw new Error("useMunim must be used inside <MunimProvider>");
   return ctx;
 }
+
+const TABS: Tab[] = ["home", "ask", "cash", "grow"];
+const tabFromHash = (): Tab => {
+  const h = window.location.hash.replace(/^#\/?/, "") as Tab;
+  return TABS.includes(h) ? h : "home";
+};
 
 const LANG_KEY = "munim_lang";
 const savedLang = (): Lang => {
@@ -70,7 +83,7 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
   const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([]);
   const [loginLang, setLoginLang] = useState<Lang>(savedLang);
-  const [tab, setTab] = useState<Tab>("home");
+  const [tab, setTabState] = useState<Tab>(tabFromHash);
   const [briefing, setBriefing] = useState<Briefing | null>(null);
   const [briefingState, setBriefingState] = useState<Load>("loading");
   const [thread, setThread] = useState<Turn[]>([]);
@@ -80,31 +93,61 @@ export function MunimProvider({ children }: { children: ReactNode }) {
   const [growth, setGrowth] = useState<Growth | null>(null);
   const [growthState, setGrowthState] = useState<Load>("loading");
   const [offers, setOffers] = useState<Record<number, Offer>>({});
-  const [audioState, setAudioState] = useState<"idle" | "playing">("idle");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [toast, setToast] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [browserOnline, setBrowserOnline] = useState(() => navigator.onLine);
+  const [reachable, setReachable] = useState(true);
+  const [syncedAt, setSyncedAt] = useState<Partial<Record<Resource, number>>>({});
+  const [failed, setFailed] = useState<Record<Resource, boolean>>({ briefing: false, forecast: false, growth: false });
   const toastTimer = useRef<number>();
+  const askingRef = useRef(false);
 
   const authed = authState === "authed" && user !== null;
   const lang: Lang = user?.language ?? loginLang;
   const t = stringsFor(lang);
+  const offline = !browserOnline || !reachable;
 
-  useEffect(() => audio.subscribe((playing) => setAudioState(playing ? "playing" : "idle")), []);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  // --- connection -----------------------------------------------------------------------------------------------
+  useEffect(() => {
+    const on = () => (setBrowserOnline(true), setReachable(true)); // optimistic: the next request settles it again
+    const off = () => setBrowserOnline(false);
+    const reach = (e: Event) => setReachable((e as CustomEvent<boolean>).detail);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    window.addEventListener(REACHABLE_EVENT, reach);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+      window.removeEventListener(REACHABLE_EVENT, reach);
+    };
+  }, []);
+
+  // --- navigation: the hash keeps the browser's back button and reloads on the same screen ----------------------
+  const setTab = useCallback((next: Tab) => {
+    if (window.location.hash !== `#/${next}`) window.location.hash = `/${next}`;
+    setTabState(next);
+    window.scrollTo({ top: 0 });
+  }, []);
+  useEffect(() => {
+    const onHash = () => setTabState(tabFromHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   const showToast = useCallback((text: string) => {
     setToast(text);
     window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 4500);
+    toastTimer.current = window.setTimeout(() => setToast(null), 5000);
   }, []);
 
-  const fail = useCallback(
-    (e: unknown) => {
-      const text = e instanceof ApiError ? e.messageLocal ?? e.message : stringsFor(lang).errorGeneric;
-      setError(text);
-      showToast(text);
-    },
-    [lang, showToast],
+  const errorText = useCallback(
+    (e: unknown) =>
+      e instanceof ApiError ? (e.code === "network" ? stringsFor(lang).errorOffline : e.messageLocal ?? e.message) : stringsFor(lang).errorGeneric,
+    [lang],
   );
 
   const clearSession = useCallback(() => {
@@ -116,11 +159,13 @@ export function MunimProvider({ children }: { children: ReactNode }) {
     setForecast(null);
     setGrowth(null);
     setSuggestions([]);
+    setSyncedAt({});
+    setFailed({ briefing: false, forecast: false, growth: false });
     setBriefingState("loading");
     setForecastState("loading");
     setGrowthState("loading");
     setTab("home");
-  }, []);
+  }, [setTab]);
 
   // --- auth -----------------------------------------------------------------------------------------------------
   useEffect(() => {
@@ -178,16 +223,23 @@ export function MunimProvider({ children }: { children: ReactNode }) {
     if (offer) setOffers((prev) => ({ ...prev, [offer.id]: offer }));
   }, []);
 
+  const mark = useCallback((r: Resource, ok: boolean) => {
+    setFailed((f) => (f[r] === !ok ? f : { ...f, [r]: !ok }));
+    if (ok) setSyncedAt((s) => ({ ...s, [r]: Date.now() }));
+  }, []);
+
+  // Each loader keeps the data already on screen when a refresh fails (it is then marked stale, never silently current).
   const loadBriefing = useCallback(async () => {
-    setBriefingState("loading");
     try {
       setBriefing(await api.briefing());
       setBriefingState("ready");
+      mark("briefing", true);
     } catch (e) {
-      setBriefingState("error");
-      fail(e);
+      setBriefingState((s) => (s === "ready" ? s : "error"));
+      mark("briefing", false);
+      if (!(e instanceof ApiError && e.code === "network")) showToast(errorText(e));
     }
-  }, [fail]);
+  }, [errorText, mark, showToast]);
 
   const loadForecast = useCallback(async () => {
     try {
@@ -195,11 +247,13 @@ export function MunimProvider({ children }: { children: ReactNode }) {
       setForecast(f);
       upsert(f.offer);
       setForecastState("ready");
+      mark("forecast", true);
     } catch (e) {
       setForecastState((s) => (s === "ready" ? s : "error"));
-      fail(e);
+      mark("forecast", false);
+      if (!(e instanceof ApiError && e.code === "network")) showToast(errorText(e));
     }
-  }, [fail, upsert]);
+  }, [errorText, mark, showToast, upsert]);
 
   const loadGrowth = useCallback(async () => {
     try {
@@ -207,31 +261,57 @@ export function MunimProvider({ children }: { children: ReactNode }) {
       setGrowth(g);
       upsert(g.offer);
       setGrowthState("ready");
+      mark("growth", true);
     } catch (e) {
       setGrowthState((s) => (s === "ready" ? s : "error"));
-      fail(e);
+      mark("growth", false);
+      if (!(e instanceof ApiError && e.code === "network")) showToast(errorText(e));
     }
-  }, [fail, upsert]);
+  }, [errorText, mark, showToast, upsert]);
+
+  const refreshAll = useCallback(
+    () => Promise.all([loadBriefing(), loadForecast(), loadGrowth()]).then(() => undefined),
+    [loadBriefing, loadForecast, loadGrowth],
+  );
 
   const userId = user?.id;
   useEffect(() => {
-    if (authed) void loadBriefing();
-  }, [authed, userId, loadBriefing]);
+    if (authed) void refreshAll();
+  }, [authed, userId]); // eslint-disable-line react-hooks/exhaustive-deps -- load once per signed-in merchant
 
   useEffect(() => {
     if (authed) api.suggestions(lang).then(setSuggestions).catch(() => undefined);
   }, [authed, userId, lang]);
 
+  // opening a screen refreshes what it shows
   useEffect(() => {
     if (!authed) return;
     if (tab === "cash") void loadForecast();
     if (tab === "grow") void loadGrowth();
-    if (tab === "home") void api.briefing().then(setBriefing).catch(() => undefined); // keeps alerts fresh
-  }, [authed, tab, loadForecast, loadGrowth]);
+    if (tab === "home") void Promise.all([loadBriefing(), loadForecast()]);
+  }, [authed, tab]); // eslint-disable-line react-hooks/exhaustive-deps -- only on navigation
+
+  // coming back online refreshes everything that was shown stale
+  const wasOffline = useRef(false);
+  useEffect(() => {
+    if (offline) wasOffline.current = true;
+    else if (wasOffline.current && authed) {
+      wasOffline.current = false;
+      void refreshAll();
+    }
+  }, [offline, authed, refreshAll]);
+
+  const retry = useCallback(async () => {
+    setReachable(true); // optimistic: the next request settles it again
+    await refreshAll();
+  }, [refreshAll]);
+
+  const stale = useCallback((r: Resource) => offline || failed[r], [failed, offline]);
 
   // --- language -------------------------------------------------------------------------------------------------
   const setLanguage = useCallback(
     async (next: Lang) => {
+      if (next === lang) return;
       try {
         localStorage.setItem(LANG_KEY, next);
       } catch {
@@ -243,74 +323,77 @@ export function MunimProvider({ children }: { children: ReactNode }) {
         const me = await api.setLanguage(next);
         setUser(me);
         audio.stop();
-        // offers and the briefing are worded per language: refetch what is on screen
-        setOffers({});
-        await Promise.all([loadBriefing(), forecast ? loadForecast() : undefined, growth ? loadGrowth() : undefined]);
+        setOffers({}); // offers and the briefing are worded per language: refetch what is on screen
+        await refreshAll();
       } catch (e) {
-        fail(e);
+        showToast(errorText(e));
       }
     },
-    [authed, fail, forecast, growth, loadBriefing, loadForecast, loadGrowth],
+    [authed, errorText, lang, refreshAll, showToast],
   );
 
   // --- ask / decide ---------------------------------------------------------------------------------------------
-  const ask = useCallback(
-    async (input: Blob | string) => {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      setThread((prev) => [...prev, { id, transcript: typeof input === "string" ? input : "…", pending: true }]);
+  const runTurn = useCallback(
+    async (id: string, input: Blob | string) => {
+      if (askingRef.current) return; // one question at a time: no accidental double submit
+      askingRef.current = true;
       setAsking(true);
+      setThread((prev) => prev.map((x) => (x.id === id ? { ...x, pending: true, error: undefined } : x)));
       const form = new FormData();
       if (typeof input === "string") form.append("text", input);
       else form.append("audio", input, "speech.webm");
-      let res: AskResponse | undefined;
       try {
+        let res: AskResponse;
         try {
           res = await api.ask(form);
         } catch (e) {
           if (!(e instanceof ApiError && e.code === "network")) throw e;
           res = await api.ask(form); // one retry on a dropped connection only
         }
-        setThread((prev) => prev.map((x) => (x.id === id ? { ...x, transcript: res!.transcript, pending: false, response: res } : x)));
+        setThread((prev) => prev.map((x) => (x.id === id ? { ...x, transcript: res.transcript, pending: false, response: res } : x)));
         upsert(res.proposal);
         if (res.intent === "approval") void Promise.all([loadForecast(), loadGrowth()]);
         if (res.audio_url) void audio.playUrl(res.audio_url);
       } catch (e) {
-        const text = e instanceof ApiError ? e.messageLocal ?? e.message : stringsFor(lang).errorGeneric;
-        setThread((prev) => prev.map((x) => (x.id === id ? { ...x, pending: false, error: text } : x)));
-        fail(e);
+        setThread((prev) => prev.map((x) => (x.id === id ? { ...x, pending: false, error: errorText(e) } : x)));
       } finally {
+        askingRef.current = false;
         setAsking(false);
       }
     },
-    [fail, lang, loadForecast, loadGrowth, upsert],
+    [errorText, loadForecast, loadGrowth, upsert],
+  );
+
+  const ask = useCallback(
+    async (input: Blob | string) => {
+      if (askingRef.current) return;
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      setThread((prev) => [...prev, { id, input, transcript: typeof input === "string" ? input : "", pending: true }]);
+      setTab("ask");
+      await runTurn(id, input);
+    },
+    [runTurn, setTab],
+  );
+
+  const retryTurn = useCallback(
+    async (id: string) => {
+      const turn = thread.find((x) => x.id === id);
+      if (turn) await runTurn(id, turn.input);
+    },
+    [runTurn, thread],
   );
 
   const decide = useCallback(
-    async (offerId: number, decision: "approve" | "reject", via: "tap" | "voice", voice?: Blob) => {
-      try {
-        const res = voice ? await api.decideByVoice(offerId, voice) : await api.decide(offerId, decision, via);
-        setOffers((prev) => (prev[offerId] ? { ...prev, [offerId]: { ...prev[offerId], status: res.status, decided_via: res.decided_via } } : prev));
-        if (res.audio_url) void audio.playUrl(res.audio_url);
-        const type = offers[offerId]?.type;
-        if (type === "credit") await loadForecast();
-        else if (type === "promo") await loadGrowth();
-        else await Promise.all([loadForecast(), loadGrowth()]);
-        return res;
-      } catch (e) {
-        fail(e);
-        throw e;
-      }
+    async (offerId: number, decision: "approve" | "reject", via: "tap" | "voice", opts: { voice?: Blob; message?: string } = {}) => {
+      const res = opts.voice
+        ? await api.decideByVoice(offerId, opts.voice, opts.message)
+        : await api.decide(offerId, decision, via, opts.message);
+      setOffers((prev) => (prev[offerId] ? { ...prev, [offerId]: { ...prev[offerId], status: res.status, decided_via: res.decided_via } } : prev));
+      if (res.audio_url) void audio.playUrl(res.audio_url);
+      await Promise.all([loadForecast(), loadGrowth()]);
+      return res;
     },
-    [fail, loadForecast, loadGrowth, offers],
-  );
-
-  const playBriefing = useCallback(
-    async (withChime = false) => {
-      if (!briefing) return;
-      if (withChime) await audio.playChime();
-      if (briefing.audio_url) await audio.playUrl(briefing.audio_url);
-    },
-    [briefing],
+    [loadForecast, loadGrowth],
   );
 
   const reset = useCallback(async () => {
@@ -322,22 +405,23 @@ export function MunimProvider({ children }: { children: ReactNode }) {
       setOffers({});
       setForecast(null);
       setGrowth(null);
-      await loadBriefing();
+      await refreshAll();
       setTab("home");
     } catch (e) {
-      fail(e);
+      showToast(errorText(e));
     }
-  }, [fail, loadBriefing]);
+  }, [errorText, refreshAll, setTab, showToast]);
 
   const value = useMemo<Munim>(
     () => ({
       authState, user, demoAccounts, requestOtp, login, loginDemo, logout, lang, t, setLanguage,
+      offline, syncedAt, stale, retry,
       tab, setTab, briefing, briefingState, thread, asking, forecast, forecastState, growth, growthState,
-      offers, audioState, suggestions, toast, error, ask, decide, playBriefing, loadForecast, loadGrowth, showToast, reset,
+      offers, suggestions, toast, ask, retryTurn, decide, showToast, reset,
     }),
-    [authState, user, demoAccounts, requestOtp, login, loginDemo, logout, lang, t, setLanguage, tab, briefing, briefingState,
-      thread, asking, forecast, forecastState, growth, growthState, offers, audioState, suggestions, toast, error, ask, decide,
-      playBriefing, loadForecast, loadGrowth, showToast, reset],
+    [authState, user, demoAccounts, requestOtp, login, loginDemo, logout, lang, t, setLanguage, offline, syncedAt, stale, retry,
+      tab, setTab, briefing, briefingState, thread, asking, forecast, forecastState, growth, growthState, offers, suggestions,
+      toast, ask, retryTurn, decide, showToast, reset],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

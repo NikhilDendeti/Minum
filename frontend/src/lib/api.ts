@@ -12,6 +12,7 @@ export class ApiError extends Error {
 }
 
 export const UNAUTHENTICATED_EVENT = "munim:unauthenticated";
+export const REACHABLE_EVENT = "munim:reachable";
 
 const csrfToken = () => document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)?.[1] ?? "";
 
@@ -23,8 +24,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(path, { ...init, headers, credentials: "same-origin" });
   } catch {
+    window.dispatchEvent(new CustomEvent(REACHABLE_EVENT, { detail: false }));
     throw new ApiError("network", "Cannot reach the Munim server.");
   }
+  window.dispatchEvent(new CustomEvent(REACHABLE_EVENT, { detail: true }));
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const e = body?.error;
@@ -54,12 +57,13 @@ export const api = {
   ask: (form: FormData) => request<AskResponse>("/api/ask", post(form)),
   forecast: () => request<Forecast>("/api/forecast"),
   growth: () => request<Growth>("/api/growth"),
-  decide: (id: number, decision: "approve" | "reject", via: "tap" | "voice") =>
-    request<DecideResponse>(`/api/offers/${id}/decide`, post({ decision, via })),
-  decideByVoice: (id: number, audio: Blob) => {
+  decide: (id: number, decision: "approve" | "reject", via: "tap" | "voice", message?: string) =>
+    request<DecideResponse>(`/api/offers/${id}/decide`, post({ decision, via, ...(message ? { message } : {}) })),
+  decideByVoice: (id: number, audio: Blob, message?: string) => {
     const form = new FormData();
     form.append("audio", audio, "decision.webm");
     form.append("via", "voice");
+    if (message) form.append("message", message);
     return request<DecideResponse>(`/api/offers/${id}/decide`, post(form));
   },
   suggestions: (lang: Lang) => request<Suggestion[]>(`/api/suggestions?language=${lang}`),

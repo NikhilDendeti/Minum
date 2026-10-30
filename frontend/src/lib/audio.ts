@@ -1,55 +1,82 @@
 // One <audio> element reused for every clip, so autoplay is unlocked by the first click and stays unlocked.
-type Listener = (playing: boolean) => void;
+// The module is a tiny external store: components read it through hooks/useAudio.
+export type AudioStatus = "idle" | "playing" | "paused" | "ended" | "error";
+export interface AudioSnapshot {
+  url: string | null;
+  status: AudioStatus;
+  time: number;
+  duration: number;
+}
 
 let el: HTMLAudioElement | null = null;
-let current: string | null = null;
-const listeners = new Set<Listener>();
+let snap: AudioSnapshot = { url: null, status: "idle", time: 0, duration: 0 };
+const listeners = new Set<() => void>();
+
+function set(next: Partial<AudioSnapshot>) {
+  snap = { ...snap, ...next };
+  listeners.forEach((l) => l());
+}
 
 function element() {
   if (!el) {
     el = new Audio();
     el.preload = "auto";
-    const emit = () => listeners.forEach((l) => l(!!el && !el.paused && !el.ended));
-    el.addEventListener("play", emit);
-    el.addEventListener("pause", emit);
-    el.addEventListener("ended", emit);
-    el.addEventListener("error", emit);
+    el.addEventListener("play", () => set({ status: "playing" }));
+    el.addEventListener("pause", () => {
+      // "pause" also fires right before "ended"; keep the ended state in that case
+      if (el && !el.ended && snap.status !== "idle") set({ status: "paused" });
+    });
+    el.addEventListener("ended", () => set({ status: "ended", time: 0 }));
+    el.addEventListener("error", () => set({ status: "error" }));
+    el.addEventListener("loadedmetadata", () => set({ duration: Number.isFinite(el!.duration) ? el!.duration : 0 }));
+    el.addEventListener("timeupdate", () => set({ time: el!.currentTime }));
   }
   return el;
 }
 
-export function subscribe(listener: Listener) {
+export const subscribe = (listener: () => void) => {
   listeners.add(listener);
   return () => void listeners.delete(listener);
-}
+};
+export const getSnapshot = () => snap;
 
-export function currentUrl() {
-  return current;
-}
-
-/** Plays a clip and resolves when it ends (or fails). Never rejects: audio is a bonus, text is the fallback. */
+/** Plays a clip and resolves when it ends or fails. Never rejects: audio is a bonus, the text is always on screen. */
 export function playUrl(url: string): Promise<void> {
   const audio = element();
   audio.pause();
-  current = url;
   audio.src = url;
+  set({ url, status: "paused", time: 0, duration: 0 });
   return new Promise((resolve) => {
     const done = () => {
       audio.removeEventListener("ended", done);
       audio.removeEventListener("error", done);
       resolve();
     };
+    // a pause by the user is not the end: only resolve for ended/error
     audio.addEventListener("ended", done);
     audio.addEventListener("error", done);
-    audio.play().catch(done);
+    audio.play().catch((e: DOMException) => {
+      // autoplay blocked: leave the clip ready so the play button works; anything else is a real failure
+      set({ status: e?.name === "NotAllowedError" ? "paused" : "error" });
+      done();
+    });
   });
 }
 
+export function pause() {
+  if (el && !el.paused) el.pause();
+}
+
+export function resume() {
+  if (el && snap.url && el.paused) void el.play().catch(() => set({ status: "error" }));
+}
+
 export function stop() {
-  const audio = element();
-  audio.pause();
-  audio.currentTime = 0;
-  current = null;
+  if (el) {
+    el.pause();
+    el.currentTime = 0;
+  }
+  set({ url: null, status: "idle", time: 0, duration: 0 });
 }
 
 /** Short two-note Soundbox-style chime made with WebAudio (no asset needed). */
