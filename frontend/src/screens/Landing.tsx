@@ -515,42 +515,6 @@ function Story() {
   );
 }
 
-// --- under the hood ------------------------------------------------------------------------------------------------------------------
-function Tech() {
-  const { t } = useMunim();
-  const nodes = [
-    ["React app", "Responsive, voice and text"],
-    ["Django REST API", "Sessions, one merchant per login"],
-    ["LangGraph agents", "Router → insights | cashflow | growth → approval gate"],
-    ["PostgreSQL", "SELECT-only role, row-level security"],
-  ];
-  return (
-    <Section>
-      <Heading title={t.lpTechTitle} sub={t.lpTechSub} />
-      <ol className="mt-10 grid gap-3 md:grid-cols-4" lang="en">
-        {nodes.map(([n, d], i) => (
-          <Reveal as="li" key={n} delay={i * 110} className="card relative p-4">
-            <p className="font-semibold text-navy">{n}</p>
-            <p className="mt-1 text-[14px] text-muted">{d}</p>
-            {i < nodes.length - 1 && (
-              <span className="absolute -bottom-3 left-1/2 z-10 -translate-x-1/2 text-muted md:-right-3.5 md:bottom-auto md:left-auto md:top-1/2 md:-translate-y-1/2 md:translate-x-0" aria-hidden>
-                <Icon name="chevron" className="h-5 w-5 md:-rotate-90" />
-              </span>
-            )}
-          </Reveal>
-        ))}
-      </ol>
-      <Reveal delay={200} className="mt-5 flex flex-wrap gap-2 text-[14px]">
-        {["Sarvam speech in and out", "GPT-4o for free-form questions", "Pre-recorded fallback clips"].map((x) => (
-          <span key={x} className="rounded-full border border-line bg-surface px-3 py-1" lang="en">
-            {x}
-          </span>
-        ))}
-      </Reveal>
-    </Section>
-  );
-}
-
 function FinalCta() {
   const { t } = useMunim();
   return (
@@ -627,7 +591,6 @@ export default function Landing() {
         <Voice />
         <RealVsSimulated />
         <Story />
-        <Tech />
       </main>
       <FinalCta />
       <SiteFooter />
