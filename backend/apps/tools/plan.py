@@ -70,10 +70,20 @@ def _round_to(x, step):
     return int(step * math.floor(x / step + 0.5))
 
 
-def payback_estimate(spend, shops, margin, rent):
+def area_rent(merchant_rent, expected_sales, merchant_sales):
+    """The new shop's monthly rent: the merchant's own rent scaled by expected sales against her own sales, kept between
+    MIN_AREA_RENT and her own rent. Without her own sales figure the full rent is used."""
+    if not merchant_sales or merchant_sales <= 0:
+        return float(merchant_rent)
+    scaled = merchant_rent * expected_sales / merchant_sales
+    return float(min(merchant_rent, max(D.MIN_AREA_RENT, scaled)))
+
+
+def payback_estimate(spend, shops, margin, rent, merchant_sales=None):
     """What a new shop in an area might earn, and how long it takes to pay back. Pure arithmetic on assumed constants.
 
     sales   = spend / (shops + 1) x NEW_SHOP_FACTOR
+    rent    = the merchant's rent x sales / her own 30-day sales, kept between MIN_AREA_RENT and her rent
     profit  = sales x margin - rent
     setup   = DEPOSIT_MONTHS x rent + OPENING_STOCK_DAYS of sales + FITOUT
     payback = setup / profit, in months (None when profit is not above zero)
@@ -81,17 +91,17 @@ def payback_estimate(spend, shops, margin, rent):
     so anyone can check the displayed numbers against each other.
     """
     sales_raw = spend / (shops + 1) * D.NEW_SHOP_FACTOR
-    profit_raw = sales_raw * margin - rent
-    setup_raw = D.DEPOSIT_MONTHS * rent + sales_raw / 30 * D.OPENING_STOCK_DAYS + D.FITOUT
+    rent_new = area_rent(rent, sales_raw, merchant_sales)
+    profit_raw = sales_raw * margin - rent_new
+    setup_raw = D.DEPOSIT_MONTHS * rent_new + sales_raw / 30 * D.OPENING_STOCK_DAYS + D.FITOUT
     sales, profit = _round_to(sales_raw, D.SALES_ROUND), _round_to(profit_raw, D.SALES_ROUND)
     setup = _round_to(setup_raw, D.SETUP_ROUND)
+    out = {"expected_monthly_sales": sales, "expected_monthly_profit": profit, "setup_cost": setup, "area_rent": round(rent_new)}
     if profit <= 0:
-        return {"expected_monthly_sales": sales, "expected_monthly_profit": profit, "setup_cost": setup,
-                "payback_months": None, "verdict": "not_recommended", "can_request": False}
+        return {**out, "payback_months": None, "verdict": "not_recommended", "can_request": False}
     months = round(setup / profit, 1)
-    return {"expected_monthly_sales": sales, "expected_monthly_profit": profit, "setup_cost": setup,
-            "payback_months": months, "verdict": "recommended" if months <= D.MAX_PAYBACK_MONTHS else "slow",
-            "can_request": months <= D.MAX_PAYBACK_MONTHS}
+    return {**out, "payback_months": months, "verdict": "recommended" if months <= D.MAX_PAYBACK_MONTHS else "slow",
+            "can_request": months <= D.REQUEST_MAX_PAYBACK_MONTHS}
 
 
 def _shop_rent(merchant_id):
@@ -168,8 +178,8 @@ def expansion_plan(merchant_id, today=None, category=None, language=None):
     today = today or settings.DEMO_TODAY
     key = category_key(merchant, category)
     note = {"en": "Simulated map. Paytm's merchant location and spend data would replace it.",
-            "hi": "यह नक़ली नक्शा है। Paytm का असली लोकेशन और ख़र्च डेटा इसकी जगह लेगा।",
-            "te": "ఇది అనుకరణ మ్యాప్. Paytm యొక్క అసలైన లొకేషన్, ఖర్చు డేటా దీని స్థానంలో వస్తుంది."}[lang]
+            "hi": "यह डेमो नक्शा है। Paytm का असली लोकेशन और ख़र्च डेटा इसकी जगह लेगा।",
+            "te": "ఇది డెమో మ్యాప్. Paytm యొక్క అసలైన లొకేషన్, ఖర్చు డేటా దీని స్థానంలో వస్తుంది."}[lang]
     monthly = float(Transaction.objects.filter(
         merchant_id=merchant_id, status="success", ts__date__gte=today - timedelta(days=30), ts__date__lt=today
     ).aggregate(s=Sum("amount"))["s"] or 0)
@@ -204,10 +214,11 @@ def expansion_plan(merchant_id, today=None, category=None, language=None):
     rent, rent_source = _shop_rent(merchant_id)
     margin = D.MARGIN[key]
     for area in top:  # additive: the ranking and every existing field above are untouched
-        area.update(payback_estimate(area["spend"], area["shops"], margin, rent))
+        area.update(payback_estimate(area["spend"], area["shops"], margin, rent, monthly))
     assumptions = {"new_shop_factor": D.NEW_SHOP_FACTOR, "margin": margin, "rent": round(rent), "rent_source": rent_source,
                    "deposit_months": D.DEPOSIT_MONTHS, "opening_stock_days": D.OPENING_STOCK_DAYS, "fitout": D.FITOUT,
-                   "max_payback_months": D.MAX_PAYBACK_MONTHS}
+                   "max_payback_months": D.MAX_PAYBACK_MONTHS, "max_request_months": D.REQUEST_MAX_PAYBACK_MONTHS,
+                   "min_rent": D.MIN_AREA_RENT}
     return jsonable({
         "available": True, "category": key, "category_label": D.CATEGORY_LABELS[key][lang], "categories": _categories(lang),
         "grid": GRID, "cell_m": CELL_M, "monthly_sales": round(monthly), "cells": cells, "top": top,

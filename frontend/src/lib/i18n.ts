@@ -68,3 +68,8 @@ export const obligationLabel = (label: string, t: Strings) => {
   const supplier = /^Supplier payment - (.+)$/.exec(label);
   return supplier ? fmt(t.obSupplier, { name: supplier[1] }) : label;
 };
+
+/** "2.1 km" in English, "2.1 किमी" in Hindi, "2.1 కిమీ" in Telugu. */
+export const distanceText = (metres: number, t: Strings) =>
+  metres >= 1000 ? `${(metres / 1000).toFixed(1)} ${t.planUnitKm}` : `${metres} ${t.planUnitM}`;
+

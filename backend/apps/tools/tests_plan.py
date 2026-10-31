@@ -5,7 +5,7 @@ from apps.agents.tests import LAKSHMI, OFFLINE, SHARMA, login
 from apps.core import seeding
 from apps.core.models import Obligation
 from apps.tools import plan_data
-from apps.tools.plan import expansion_plan, payback_estimate, stock_plan
+from apps.tools.plan import area_rent, expansion_plan, payback_estimate, stock_plan
 
 
 @override_settings(READONLY_ALIAS="default", **OFFLINE)
@@ -96,23 +96,37 @@ class PlanTests(TestCase):
 
     # --- payback estimate for the new-branch suggestion ---------------------------------------------------------------
     def test_payback_maths_for_a_known_input(self):
-        # spend 225,000 with no shop yet, grocery margin 22%, rent 18,000:
-        #   sales 135,000, profit 29,700 - 18,000 = 11,700 (shown as 11,500), setup 54,000 + 45,000 + 100,000 = 199,000 (200,000)
-        e = payback_estimate(225000, 0, 0.22, 18000)
-        self.assertEqual(e["expected_monthly_sales"], 135000)
-        self.assertEqual(e["expected_monthly_profit"], 11500)
-        self.assertEqual(e["setup_cost"], 200000)
-        self.assertEqual(e["payback_months"], 17.4)
+        # spend 200,000 with no shop yet: sales 200,000 x 0.6 = 120,000. Her own sales are 240,000 and her rent 20,000,
+        # so the new shop pays 20,000 x 120,000 / 240,000 = 10,000. Profit 120,000 x 0.20 - 10,000 = 14,000.
+        # Setup 3 x 10,000 + 120,000 / 3 + 100,000 = 170,000. Payback 170,000 / 14,000 = 12.1 months.
+        e = payback_estimate(200000, 0, 0.20, 20000, 240000)
+        self.assertEqual(e["area_rent"], 10000)
+        self.assertEqual(e["expected_monthly_sales"], 120000)
+        self.assertEqual(e["expected_monthly_profit"], 14000)
+        self.assertEqual(e["setup_cost"], 170000)
+        self.assertEqual(e["payback_months"], 12.1)
         self.assertEqual(e["verdict"], "recommended")
         self.assertTrue(e["can_request"])
-        self.assertEqual(payback_estimate(400000, 1, 0.22, 18000)["verdict"], "slow")  # about 23 months: shown, but no action
+
+    def test_rent_is_scaled_to_sales_and_clamped(self):
+        self.assertEqual(area_rent(18000, 60000, 1000000), 5000)  # a very small shop still pays the minimum
+        self.assertEqual(area_rent(18000, 60000, 10000), 18000)  # never more than her own rent
+        self.assertEqual(area_rent(3000, 60000, 1000000), 3000)  # her own rent is already below the minimum
+        self.assertEqual(area_rent(18000, 135000, None), 18000)  # no sales figure: the full rent
+        self.assertEqual(round(area_rent(18000, 135000, 285979)), 8497)
 
     def test_a_loss_is_not_recommended_and_has_no_payback(self):
-        e = payback_estimate(225000, 0, 0.10, 18000)  # the first-draft grocery margin: profit is below zero after rent
+        e = payback_estimate(100000, 0, 0.10, 18000)  # full rent on small sales: profit is below zero
         self.assertLess(e["expected_monthly_profit"], 0)
         self.assertIsNone(e["payback_months"])
         self.assertEqual(e["verdict"], "not_recommended")
         self.assertFalse(e["can_request"])
+
+    def test_slow_payback_is_shown_but_offers_no_request_beyond_36_months(self):
+        slow = payback_estimate(100000, 0, 0.20, 20000, 60000)  # rent stays 20,000: profit 12,000 - 20,000 < 0
+        self.assertFalse(slow["can_request"])
+        e = payback_estimate(200000, 0, 0.20, 20000, 240000)
+        self.assertEqual(e["can_request"], e["payback_months"] <= 36)
 
     def test_estimates_are_added_without_moving_the_ranking(self):
         top = expansion_plan(1)["top"]
@@ -122,13 +136,18 @@ class PlanTests(TestCase):
         self.assertEqual([t["distance_m"] for t in top], [2100, 1600, 1400])
         for t in top:
             self.assertEqual(t["payback_months"], round(t["setup_cost"] / t["expected_monthly_profit"], 1))
+            self.assertEqual(t["can_request"], t["payback_months"] is not None and t["payback_months"] <= 36)
 
     def test_numbers_are_sane_for_lakshmi_and_venkat(self):
         for merchant_id in (1, 4):
             for t in expansion_plan(merchant_id)["top"]:
                 self.assertIsNotNone(t["payback_months"], (merchant_id, t))
                 self.assertTrue(3 <= t["payback_months"] <= 36, (merchant_id, t["payback_months"]))
-        self.assertTrue(any(t["can_request"] for t in expansion_plan(1)["top"]))  # Lakshmi has an area worth requesting for
+        # Lakshmi: every one of her three areas can be requested, and the rent shown is smaller than her own
+        for t in expansion_plan(1)["top"]:
+            self.assertTrue(t["can_request"])
+            self.assertLess(t["area_rent"], 18000)
+            self.assertGreaterEqual(t["area_rent"], 5000)
 
     def test_rent_comes_from_the_merchants_own_obligations_else_the_default(self):
         own = expansion_plan(1)["assumptions"]
@@ -137,3 +156,9 @@ class PlanTests(TestCase):
         fallback = expansion_plan(1)["assumptions"]
         self.assertEqual((fallback["rent"], fallback["rent_source"]), (15000, "assumed"))
 
+    def test_the_map_note_says_demo_not_fake(self):
+        for code, word in (("hi-IN", "डेमो"), ("te-IN", "డెమో")):
+            note = expansion_plan(1, language=code)["note"]
+            self.assertIn(word, note)
+            for bad in ("नक़ली", "नकली", "కృత్రిమ", "అనుకరణ"):
+                self.assertNotIn(bad, note)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMunim } from "../hooks/useMunim";
 import { api } from "../lib/api";
-import { fmt, inr, shortDate, weekdayName } from "../lib/i18n";
+import { distanceText, fmt, inr, shortDate, weekdayName } from "../lib/i18n";
 import type { Lang, PlanExpansion, PlanStock } from "../types";
 import { SummaryList } from "./ConfirmDialog";
 import { Dialog, Disclosure, Icon, Notice, SimulatedTag, Skeleton, StatusLabel } from "./ui";
@@ -177,8 +177,6 @@ function StockPlanCard({ lang }: { lang: Lang }) {
 }
 
 // --- where a second shop could do well ---------------------------------------------------------------------------
-const distance = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
-
 function ExpansionCard({ lang }: { lang: Lang }) {
   const { t } = useMunim();
   const { data, error } = useLoad<PlanExpansion>(() => api.planExpansion(lang), [lang]);
@@ -229,7 +227,7 @@ function ExpansionCard({ lang }: { lang: Lang }) {
                     <div className="min-w-0">
                       <p className="font-medium">
                         <span className="sr-only">{fmt(t.planRank, { n: a.rank })}. </span>
-                        {fmt(t.planAreaLine, { distance: distance(a.distance_m), direction: a.direction })}
+                        {fmt(t.planAreaLine, { distance: distanceText(a.distance_m, t), direction: a.direction })}
                       </p>
                       <p className="meta">{fmt(t.planAreaSpend, { amount: inr(a.spend), category: data.category_label ?? "", shops: a.shops })}</p>
                       {a.payback_months != null ? (
@@ -244,8 +242,8 @@ function ExpansionCard({ lang }: { lang: Lang }) {
                       ) : a.expected_monthly_sales != null ? (
                         <p className="mt-1 text-[14px] text-risk-fg">{fmt(t.planEstimateLoss, { sales: inr(a.expected_monthly_sales) })}</p>
                       ) : null}
-                      {a.can_request &&
-                        (requested[a.rank] ? (
+                      {a.can_request ? (
+                        requested[a.rank] ? (
                           <div className="mt-2">
                             <StatusLabel tone="ok">{t.planRequested}</StatusLabel>
                           </div>
@@ -253,7 +251,10 @@ function ExpansionCard({ lang }: { lang: Lang }) {
                           <button className="btn-secondary mt-2" onClick={() => setAsking(a.rank)}>
                             {t.planRequestCredit}
                           </button>
-                        ))}
+                        )
+                      ) : (
+                        <p className="mt-2 text-[14px] font-medium text-risk-fg">{t.planNotRecommended}</p>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -269,12 +270,13 @@ function ExpansionCard({ lang }: { lang: Lang }) {
                     <ul className="space-y-1.5 rounded-ctl bg-canvas p-3 text-[14px]">
                       <li>{fmt(t.planHowSales, { factor: as.new_shop_factor })}</li>
                       <li>
-                        {fmt(t.planHowProfit, {
-                          margin: Math.round(as.margin * 100),
-                          rent: inr(as.rent),
+                        {fmt(t.planHowRent, {
                           source: as.rent_source === "own" ? t.planRentOwn : t.planRentAssumed,
+                          rent: inr(as.rent),
+                          min: inr(as.min_rent ?? 5000),
                         })}
                       </li>
+                      <li>{fmt(t.planHowProfit, { margin: Math.round(as.margin * 100) })}</li>
                       <li>{fmt(t.planHowSetup, { months: as.deposit_months, days: as.opening_stock_days, fitout: inr(as.fitout) })}</li>
                       <li>{t.planHowPayback}</li>
                       <li className="meta">{t.planHowNote}</li>
@@ -310,7 +312,7 @@ function ExpansionCard({ lang }: { lang: Lang }) {
             >
               <SummaryList
                 rows={[
-                  { label: t.planDlgArea, value: fmt(t.planAreaLine, { distance: distance(chosen.distance_m), direction: chosen.direction }) },
+                  { label: t.planDlgArea, value: fmt(t.planAreaLine, { distance: distanceText(chosen.distance_m, t), direction: chosen.direction }) },
                   { label: t.planDlgSetup, value: inr(chosen.setup_cost ?? 0) },
                   { label: t.planDlgPayback, value: fmt(t.planDlgMonths, { months: chosen.payback_months ?? 0 }) },
                 ]}

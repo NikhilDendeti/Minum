@@ -160,6 +160,7 @@ export interface PlanExpansion {
     expected_monthly_sales?: number;
     expected_monthly_profit?: number;
     setup_cost?: number;
+    area_rent?: number;
     payback_months?: number | null;
     verdict?: "recommended" | "slow" | "not_recommended";
     can_request?: boolean;
@@ -173,6 +174,8 @@ export interface PlanExpansion {
     opening_stock_days: number;
     fitout: number;
     max_payback_months: number;
+    max_request_months?: number;
+    min_rent?: number;
   };
   simulated: boolean;
   note: string;

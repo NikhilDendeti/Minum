@@ -9,7 +9,7 @@ import IndiaFlag from "../components/IndiaFlag";
 import { Wordmark } from "../components/Shell";
 import { Disclosure, Icon, SimulatedTag } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
-import { fmt, inr, shortDate, weekdayName } from "../lib/i18n";
+import { distanceText, fmt, inr, shortDate, weekdayName } from "../lib/i18n";
 import { DEMO, PLAN } from "../lib/landingData";
 import { CHART } from "../lib/theme";
 
@@ -403,7 +403,7 @@ function PlanDemo() {
   const category = PLAN.map.category[lang as keyof typeof PLAN.map.category] ?? PLAN.map.category["en-IN"];
   const [mapRef, seen] = useInView<HTMLDivElement>(0.3);
   const max = Math.max(...PLAN.map.cells.filter((c) => !c.you).map((c) => c.score), 1);
-  const distance = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
+  const distance = (m: number) => distanceText(m, t);
   const benefits = [
     [t.lpPlanB1T, t.lpPlanB1],
     [t.lpPlanB2T, t.lpPlanB2],

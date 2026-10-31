@@ -386,11 +386,11 @@
   "lpPlanNote": "Simulated for the demo: the product lists, festival uplift and the map are assumptions. With Paytm's item and location data, this becomes real stock and branch advice.",
   "planRankNote": "Ranked by monthly spend per shop already there, so it finds areas that are under-served, not just busy.",
   "planEstimate": "Expected sales about {sales} a month · profit about {profit} · pays back in about {months} months · setup about {setup}",
-  "planEstimateLoss": "Expected sales about {sales} a month, but profit after rent is below zero. Not recommended here.",
+  "planEstimateLoss": "Expected sales about {sales} a month, but profit after rent is below zero.",
   "planHow": "How we estimate this",
   "planHowSales": "Expected sales = monthly spend in the area ÷ (similar shops + 1) × {factor}. A new shop does not win a full share on day one.",
-  "planHowProfit": "Profit = expected sales × {margin}% (what is left after stock and running costs) − rent of {rent} a month ({source}).",
-  "planHowSetup": "Setup = {months} months of rent as deposit + {days} days of opening stock + {fitout} for fit-out, rounded to the nearest ₹5,000.",
+  "planHowProfit": "Profit = expected sales × {margin}% (what is left after stock and running costs) − that rent.",
+  "planHowSetup": "Setup = {months} months of that rent as deposit + {days} days of opening stock + {fitout} for fit-out, rounded to the nearest ₹5,000.",
   "planHowPayback": "Payback = setup ÷ monthly profit, in months.",
   "planHowNote": "Every figure here is an assumption for the demo. Paytm's real sales, rent and margin data would replace them.",
   "planRentOwn": "your shop's own rent",
@@ -404,5 +404,9 @@
   "planDlgNothing": "Nothing happens until you confirm.",
   "planDlgDemo": "Demo action: no loan is requested and no money moves.",
   "planDlgConfirm": "Request credit",
-  "planRequested": "Requested (simulated)"
+  "planRequested": "Requested (demo)",
+  "planUnitKm": "km",
+  "planUnitM": "m",
+  "planNotRecommended": "Not recommended at these numbers",
+  "planHowRent": "Rent = {source} of {rent} a month, scaled to the new shop's expected sales compared with your own last 30 days, never below {min} or above that rent."
 }

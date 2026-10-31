@@ -146,14 +146,18 @@ LOCATIONS = {
 
 # --- new-branch economics: EVERY value below is an assumption for the demo, shown to the merchant under "How we estimate this" ---
 NEW_SHOP_FACTOR = 0.6  # a new shop does not win a full share of an area's spend on day one
-# Share of sales left after stock and running costs, before rent. Assumed per shop type. The first draft used 0.10, 0.15,
-# 0.25 and 0.40 (grocery, pharmacy, tea, salon); at those values every grocery area lost money after rent, so they were raised.
-MARGIN = {"grocery": 0.22, "pharmacy": 0.20, "tea": 0.35, "salon": 0.40, "produce": 0.18, "pooja": 0.20}
+# Share of sales left after stock and running costs, before rent. Assumed per shop type.
+# History: the first draft used 0.10 / 0.15 / 0.25 / 0.40 / 0.12 with the full rent of the existing shop, and every grocery area
+# lost money. Rent is now scaled to the new shop's sales (below), so the margins are back to realistic levels.
+MARGIN = {"grocery": 0.15, "pharmacy": 0.18, "tea": 0.30, "salon": 0.45, "produce": 0.15, "pooja": 0.22}
 DEFAULT_RENT = 15000  # Rs a month, used only when a merchant has no "Shop rent" obligation
-DEPOSIT_MONTHS = 3  # months of rent paid up front as a deposit
+MIN_AREA_RENT = 5000  # a new shop never pays less than this a month (unless the merchant's own rent is lower)
+# The new shop's rent = the merchant's own rent x (new shop's expected sales / the merchant's own sales over 30 days),
+# kept between MIN_AREA_RENT and the merchant's own rent: a smaller shop does not pay a bigger shop's rent.
+DEPOSIT_MONTHS = 3  # months of the new shop's rent paid up front as a deposit
 OPENING_STOCK_DAYS = 10  # days of expected sales held as opening stock
 FITOUT = 100000  # Rs for shelves, signage and electrics
 SALES_ROUND = 500  # displayed sales and profit are rounded to this
 SETUP_ROUND = 5000  # displayed setup cost is rounded to this
-MAX_PAYBACK_MONTHS = 18  # an area at or under this offers the "Request expansion credit" action
-
+MAX_PAYBACK_MONTHS = 18  # at or under this an area is "recommended"
+REQUEST_MAX_PAYBACK_MONTHS = 36  # at or under this an area offers the "Request expansion credit" action
