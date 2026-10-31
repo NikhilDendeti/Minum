@@ -159,7 +159,7 @@ def ask(request):
 
     if audio:
         if audio.size > MAX_AUDIO_BYTES:
-            return fail(413, "audio_too_large", "Audio is too long; keep it under 20 seconds.", merchant.language)
+            return fail(413, "audio_too_large", "Audio is too long; keep it under 30 seconds.", merchant.language)
         t0 = time.time()
         try:
             heard = transcribe(audio.read(), audio.content_type, hint if i18n.is_supported(hint) else None)

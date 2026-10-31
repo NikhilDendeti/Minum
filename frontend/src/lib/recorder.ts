@@ -1,5 +1,8 @@
 // Press-and-hold recording: 16 kHz mono Opus in WebM, hard-capped.
-export const MAX_ASK_MS = 20_000;
+// Sarvam's file API takes 30 s at most and a clip ends a little after its timer, so the mic stops at 29.5 s
+// while the screen shows a 30 s limit. A clip over 30 s would fall back to a slower, less accurate transcriber.
+export const ASK_LIMIT_S = 30;
+export const MAX_ASK_MS = 29_500;
 export const MAX_DECIDE_MS = 4_000;
 
 export class Recorder {

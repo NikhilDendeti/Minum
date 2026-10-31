@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMunim } from "../hooks/useMunim";
-import { MAX_ASK_MS, Recorder } from "../lib/recorder";
+import { ASK_LIMIT_S, MAX_ASK_MS, Recorder } from "../lib/recorder";
 import { Icon, Notice, Spinner } from "./ui";
 
 const canRecord = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined";
@@ -96,7 +96,7 @@ export default function AskBox({ placeholder }: { placeholder?: string }) {
               {t.listening}
             </p>
             <p className="meta num">
-              {clock(seconds)} / {clock(MAX_ASK_MS / 1000)}
+              {clock(seconds)} / {clock(ASK_LIMIT_S)}
             </p>
           </div>
           <button className="btn-secondary" onClick={() => void finish(false)}>

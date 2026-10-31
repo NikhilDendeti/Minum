@@ -101,7 +101,7 @@ Seven endpoints, JSON in and out except audio, no auth (single merchant), CORS o
 }
 ```
 
-**POST `/api/ask`** — `multipart/form-data` with either `audio` (webm/ogg/wav, ≤ 20 s) or `text`; optional `language` (`te-IN`/`hi-IN`/`auto`, default `auto`). → 200
+**POST `/api/ask`** — `multipart/form-data` with either `audio` (webm/ogg/wav, ≤ 30 s, the most Sarvam transcribes in one request) or `text`; optional `language` (`te-IN`/`hi-IN`/`auto`, default `auto`). → 200
 
 ```json
 {
