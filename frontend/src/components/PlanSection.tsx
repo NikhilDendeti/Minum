@@ -50,7 +50,7 @@ function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
 
 function CardShell({ id, title, sub, children }: { id: string; title: string; sub: string; children: React.ReactNode }) {
   return (
-    <section aria-labelledby={id} className="card p-4 sm:p-6">
+    <section aria-labelledby={id} className="card min-w-0 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id={id} className="section-title">
           {title}
@@ -189,7 +189,7 @@ function ExpansionCard({ lang }: { lang: Lang }) {
       {!data || !data.cells || !data.top || !data.grid ? (
         error ? <Notice tone="risk">{t.planLoadFailed}</Notice> : <Loading />
       ) : (
-        <div className="grid gap-5 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:items-start">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:items-start">
           <div
             role="img"
             aria-label={t.planMapAlt}

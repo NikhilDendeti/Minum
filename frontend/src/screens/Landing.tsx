@@ -7,10 +7,10 @@ import { AskMini, CashMini, GrowMini, HomeMini, Phone } from "../components/land
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import IndiaFlag from "../components/IndiaFlag";
 import { Wordmark } from "../components/Shell";
-import { Disclosure, Icon } from "../components/ui";
+import { Disclosure, Icon, SimulatedTag } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
-import { fmt, inr, shortDate } from "../lib/i18n";
-import { DEMO } from "../lib/landingData";
+import { fmt, inr, shortDate, weekdayName } from "../lib/i18n";
+import { DEMO, PLAN } from "../lib/landingData";
 import { CHART } from "../lib/theme";
 
 const goDemo = () => {
@@ -395,6 +395,142 @@ function GrowDemo() {
   );
 }
 
+// --- plan ahead: what to stock, and where a second shop could work ----------------------------------------------------------
+function PlanDemo() {
+  const { t, lang } = useMunim();
+  const stock = PLAN.stock[lang as keyof typeof PLAN.stock] ?? PLAN.stock["en-IN"];
+  const top = PLAN.map.top[lang as keyof typeof PLAN.map.top] ?? PLAN.map.top["en-IN"];
+  const category = PLAN.map.category[lang as keyof typeof PLAN.map.category] ?? PLAN.map.category["en-IN"];
+  const [mapRef, seen] = useInView<HTMLDivElement>(0.3);
+  const max = Math.max(...PLAN.map.cells.filter((c) => !c.you).map((c) => c.score), 1);
+  const distance = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
+  const benefits = [
+    [t.lpPlanB1T, t.lpPlanB1],
+    [t.lpPlanB2T, t.lpPlanB2],
+    [t.lpPlanB3T, t.lpPlanB3],
+  ];
+  return (
+    <Section id="plan">
+      <Heading title={t.lpPlanTitle} sub={t.lpPlanSub} />
+      <ul className="mt-8 grid gap-4 md:grid-cols-3">
+        {benefits.map(([title, body], i) => (
+          <Reveal as="li" key={title} delay={i * 110} className="card p-4">
+            <p className="font-semibold text-navy">{title}</p>
+            <p className="meta mt-1 text-[14px]">{body}</p>
+          </Reveal>
+        ))}
+      </ul>
+
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Reveal className="card min-w-0 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-[17px] font-semibold text-navy">{t.planStockTitle}</h3>
+            <SimulatedTag />
+          </div>
+          <p className="meta mt-1">{stock.category}</p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[400px] border-collapse text-[14px]">
+              <thead>
+                <tr className="border-b border-line text-left align-bottom">
+                  <th scope="col" className="py-2 pr-3 font-medium">
+                    {t.planItem}
+                  </th>
+                  {stock.days.map((d) => (
+                    <th key={d.date} scope="col" className="px-2 py-2 text-right font-medium">
+                      <div>{weekdayName(d.date, lang)}</div>
+                      <div className="meta font-normal">{shortDate(d.date, lang)}</div>
+                      {d.events.map((e) => (
+                        <div key={e} className="mt-0.5 text-[12px] font-medium text-warn-fg">
+                          {e}
+                        </div>
+                      ))}
+                    </th>
+                  ))}
+                  <th scope="col" className="py-2 pl-2 text-right font-medium">
+                    {t.planTotal}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {stock.items.map((it) => (
+                  <tr key={it.sku} className="border-b border-line last:border-0">
+                    <th scope="row" className="py-2 pr-3 text-left font-normal">
+                      {it.name} <span className="meta">({it.unit})</span>
+                    </th>
+                    {it.per_day.map((n, i) => {
+                      const tip = it.boost_day === i ? fmt(t.planBoostTip, { event: it.boost_event ?? "", pct: it.boost_pct ?? 0 }) : "";
+                      return (
+                        <td key={i} className="num px-2 py-2 text-right">
+                          {tip ? (
+                            <span className="font-semibold text-warn-fg" title={tip}>
+                              {n} <span aria-label={tip}>↑</span>
+                            </span>
+                          ) : (
+                            n
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="num py-2 pl-2 text-right font-semibold">{it.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="meta mt-2">{t.planBoostLegend}</p>
+        </Reveal>
+
+        <Reveal delay={120} className="card min-w-0 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-[17px] font-semibold text-navy">{t.planMapTitle}</h3>
+            <SimulatedTag />
+          </div>
+          <p className="meta mt-1">{fmt(t.planMapSub, { category })}</p>
+          <div className="mt-3 grid grid-cols-1 items-start gap-4 sm:grid-cols-[minmax(0,230px)_minmax(0,1fr)]">
+            <div
+              ref={mapRef}
+              role="img"
+              aria-label={t.planMapAlt}
+              className="grid gap-1"
+              style={{ gridTemplateColumns: `repeat(${PLAN.map.grid}, minmax(0, 1fr))` }}
+            >
+              {PLAN.map.cells.map((c) => (
+                <div
+                  key={`${c.row}-${c.col}`}
+                  className={`flex aspect-square items-center justify-center rounded text-[11px] font-semibold text-navy transition-opacity duration-500 ${seen ? "opacity-100" : "opacity-0"} ${c.you ? "border-2 border-navy bg-surface" : ""}`}
+                  style={{
+                    transitionDelay: seen ? `${(c.row * PLAN.map.grid + c.col) * 14}ms` : "0ms",
+                    ...(c.you ? {} : { backgroundColor: `color-mix(in srgb, var(--brand) ${Math.round(8 + 55 * (c.score / max))}%, transparent)` }),
+                  }}
+                >
+                  {c.you ? t.planYou : c.rank > 0 ? <span className="flex h-5 w-5 items-center justify-center rounded-full bg-navy text-white">{c.rank}</span> : null}
+                </div>
+              ))}
+            </div>
+            <ol className="space-y-3">
+              {top.map((a) => (
+                <li key={a.rank} className="flex gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[12px] font-semibold text-white" aria-hidden>
+                    {a.rank}
+                  </span>
+                  <div>
+                    <p className="text-[14px] font-medium">
+                      <span className="sr-only">{fmt(t.planRank, { n: a.rank })}. </span>
+                      {fmt(t.planAreaLine, { distance: distance(a.distance_m), direction: a.direction })}
+                    </p>
+                    <p className="meta">{fmt(t.planAreaSpend, { amount: inr(a.spend), category, shops: a.shops })}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </Reveal>
+      </div>
+      <p className="meta mt-5 max-w-3xl">{t.lpPlanNote}</p>
+    </Section>
+  );
+}
+
 // --- trust -------------------------------------------------------------------------------------------------------------------
 function Trust() {
   const { t } = useMunim();
@@ -404,7 +540,7 @@ function Trust() {
     [t.lpTrust3T, t.lpTrust3B],
   ];
   return (
-    <Section id="trust">
+    <Section id="trust" tone="soft">
       <Heading title={t.lpTrustTitle} />
       <ul className="mt-10 grid gap-5 md:grid-cols-3">
         {items.map(([title, body], i) => (
@@ -439,7 +575,7 @@ function Voice() {
     { code: "te-IN", name: "Telugu", native: "తెలుగు" },
   ];
   return (
-    <Section tone="soft">
+    <Section>
       <Heading title={t.lpVoiceTitle} sub={t.lpVoiceSub} />
       <ul className="mt-10 grid gap-5 lg:grid-cols-3">
         {clips.map((c, i) => (
@@ -464,7 +600,7 @@ function RealVsSimulated() {
   const real = [t.lpReal1, t.lpReal2, t.lpReal3, t.lpReal4, t.lpReal5];
   const sim = [t.lpSim1, t.lpSim2, t.lpSim3];
   return (
-    <Section>
+    <Section tone="soft">
       <Heading title={t.lpRealTitle} />
       <div className="mt-10 grid gap-5 md:grid-cols-[1.2fr_1fr]">
         <Reveal className="card p-5">
@@ -499,7 +635,7 @@ function Story() {
   const { t } = useMunim();
   const stories = [t.lpStory1, t.lpStory2, t.lpStory3, t.lpStory4, t.lpStory5];
   return (
-    <Section tone="soft">
+    <Section>
       <Heading title={t.lpStoryTitle} />
       <ol className="relative mt-10 max-w-2xl space-y-6 border-l border-line-strong pl-8">
         {stories.map((s, i) => (
@@ -587,6 +723,7 @@ export default function Landing() {
         <AskDemo />
         <CashDemo />
         <GrowDemo />
+        <PlanDemo />
         <Trust />
         <Voice />
         <RealVsSimulated />

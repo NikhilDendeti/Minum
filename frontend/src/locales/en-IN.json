@@ -373,6 +373,15 @@
   "planYou": "You",
   "planYourSales": "Your sales over the last 30 days: {amount}",
   "planAreaLine": "About {distance} {direction} of your shop",
-  "planAreaSpend": "{amount} a month spent on {category}. {shops} similar shops already there.",
-  "planRank": "Area {n}"
+  "planAreaSpend": "{amount} a month spent on {category}. Similar shops already there: {shops}.",
+  "planRank": "Area {n}",
+  "lpPlanTitle": "Plan ahead: what to stock and where to grow",
+  "lpPlanSub": "Before a festival or a busy weekend, Munim tells you what to stock. It also shows where spend near you is highest, so you can see where a second shop could work.",
+  "lpPlanB1T": "The right stock at the right time",
+  "lpPlanB1": "Order for the next 3 days from your own sales, so you do not run out or over-buy.",
+  "lpPlanB2T": "Festivals tied to your shop",
+  "lpPlanB2": "Chhath, Children's Day or Dev Deepavali: Munim shows which items each one lifts for your shop type.",
+  "lpPlanB3T": "See where a second shop could work",
+  "lpPlanB3": "Nearby areas ranked by spend for each shop already there.",
+  "lpPlanNote": "Simulated for the demo: the product lists, festival uplift and the map are assumptions. With Paytm's item and location data, this becomes real stock and branch advice."
 }

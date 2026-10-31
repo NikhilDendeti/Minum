@@ -44,7 +44,7 @@ UNIT_LABELS = {
 CATALOG = {
     "grocery": [
         ("rice", ("Rice", "चावल", "బియ్యం"), "kg", 14, ("staple",)),
-        ("atta", ("Wheat flour (atta)", "आटा", "గోధుమ పిండి"), "kg", 12, ("staple", "chhath")),
+        ("atta", ("Wheat flour, atta", "आटा", "గోధుమ పిండి"), "kg", 12, ("staple", "chhath")),
         ("sugar", ("Sugar", "चीनी", "చక్కెర"), "kg", 6, ("sweet",)),
         ("jaggery", ("Jaggery", "गुड़", "బెల్లం"), "kg", 2, ("sweet", "chhath")),
         ("oil", ("Cooking oil", "खाने का तेल", "వంట నూనె"), "l", 6, ("staple",)),
@@ -93,7 +93,7 @@ CATALOG = {
         ("camphor", ("Camphor", "कपूर", "కర్పూరం"), "packs", 15, ("puja",)),
         ("wicks", ("Cotton wicks", "रुई की बाती", "దూది వత్తులు"), "packs", 20, ("puja", "lamp")),
         ("lampoil", ("Lamp oil", "दीपक का तेल", "దీపం నూనె"), "l", 4, ("puja", "lamp")),
-        ("diyas", ("Clay lamps (diyas)", "मिट्टी के दीये", "ప్రమిదలు"), "dozen", 12, ("puja", "lamp")),
+        ("diyas", ("Clay lamps, diyas", "मिट्टी के दीये", "ప్రమిదలు"), "dozen", 12, ("puja", "lamp")),
         ("kumkum", ("Kumkum and turmeric", "कुमकुम और हल्दी", "కుంకుమ, పసుపు"), "packs", 18, ("puja",)),
         ("coconut", ("Coconut", "नारियल", "కొబ్బరికాయ"), "pcs", 20, ("puja", "chhath")),
         ("garlands", ("Flower garlands", "फूलों की माला", "పూల మాలలు"), "pcs", 25, ("puja",)),
