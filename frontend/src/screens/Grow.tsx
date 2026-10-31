@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CampaignDialog, MessagePreview, channelLabel } from "../components/OfferDialogs";
+import PlanSection from "../components/PlanSection";
 import StockReminder from "../components/StockReminder";
 import { EmptyState, Icon, Notice, PageHeading, SimulatedTag, Skeleton, StatusLabel } from "../components/ui";
 import { useMunim } from "../hooks/useMunim";
@@ -199,6 +200,8 @@ export default function Grow() {
         )}
         {growth.stock && <StockReminder offer={growth.stock} locked={locked} />}
       </div>
+
+      <PlanSection />
 
       {dialog && offer && (
         <CampaignDialog

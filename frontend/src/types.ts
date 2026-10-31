@@ -118,6 +118,42 @@ export interface Forecast {
   offer: Offer | null;
 }
 
+export interface PlanItem {
+  sku: string;
+  name: string;
+  unit: string;
+  unit_label: string;
+  per_day: number[];
+  total: number;
+  boosted: boolean;
+  reasons: { day: number; event_id: string; event: string; pct: number }[];
+}
+
+export interface PlanStock {
+  available: boolean;
+  category?: string;
+  category_label?: string;
+  categories: { key: string; label: string }[];
+  typical_daily_sales?: number;
+  days?: { date: string; weekday: number; expected_sales: number; vs_typical_pct: number; events: { id: string; name: string }[] }[];
+  items?: PlanItem[];
+  upcoming?: { id: string; name: string; date: string; days_away: number; items: string[] }[];
+  simulated: boolean;
+  note: string;
+}
+
+export interface PlanExpansion {
+  available: boolean;
+  category_label?: string;
+  grid?: number;
+  cell_m?: number;
+  monthly_sales?: number;
+  cells?: { row: number; col: number; spend: number; shops: number; score: number; you: boolean; rank: number }[];
+  top?: { rank: number; row: number; col: number; spend: number; shops: number; distance_m: number; direction: string }[];
+  simulated: boolean;
+  note: string;
+}
+
 export interface Growth {
   segment: { name: string; rule: string; count: number; avg_monthly_spend: number };
   offer: Offer | null;

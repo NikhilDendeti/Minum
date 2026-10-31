@@ -40,6 +40,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-only-secret")
 if not DEBUG and SECRET_KEY in ("", "dev-only-secret", "change-me"):
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY to a long random value when DEBUG is off.")
 DEMO_MODE = env_bool("DEMO_MODE", False)
+FEATURE_PLAN = env_bool("FEATURE_PLAN", False)  # stock plan and new-branch suggestion; off unless turned on
 # Local work accepts any host; in production list them (the private ".railway.internal" name is always allowed
 # so the frontend's proxy can reach the backend).
 ALLOWED_HOSTS = ["*"] if DEBUG else [h.strip() for h in

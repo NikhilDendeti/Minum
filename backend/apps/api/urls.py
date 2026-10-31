@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import plan_views, views
 
 urlpatterns = [
     path("health", views.health),
@@ -17,4 +17,7 @@ urlpatterns = [
     path("conversations/<int:conversation_id>", views.conversation),
     path("suggestions", views.suggestions),
     path("reset", views.reset),
+    path("plan/status", plan_views.status),
+    path("plan/stock", plan_views.stock),
+    path("plan/expansion", plan_views.expansion),
 ]

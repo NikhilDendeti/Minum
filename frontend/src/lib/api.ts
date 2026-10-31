@@ -1,4 +1,4 @@
-import type { AskResponse, Briefing, DecideResponse, DemoAccount, Forecast, Growth, Lang, Me, Suggestion } from "../types";
+import type { AskResponse, Briefing, DecideResponse, DemoAccount, Forecast, Growth, Lang, Me, PlanExpansion, PlanStock, Suggestion } from "../types";
 
 export class ApiError extends Error {
   constructor(
@@ -74,6 +74,10 @@ export const api = {
     if (message) form.append("message", message);
     return request<DecideResponse>(`/api/offers/${id}/decide`, post(form));
   },
+  planStatus: () => request<{ enabled: boolean }>("/api/plan/status"),
+  planStock: (lang: Lang, category?: string | null) =>
+    request<PlanStock>(`/api/plan/stock?language=${lang}${category ? `&category=${encodeURIComponent(category)}` : ""}`),
+  planExpansion: (lang: Lang) => request<PlanExpansion>(`/api/plan/expansion?language=${lang}`),
   suggestions: (lang: Lang) => request<Suggestion[]>(`/api/suggestions?language=${lang}`),
   reset: () => request<{ seeded: boolean; seconds: number }>("/api/reset", post()),
 };

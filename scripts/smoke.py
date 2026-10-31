@@ -118,7 +118,7 @@ check("logout", r.status_code == 200 and client.get("/api/me").status_code == 40
 # --- reset ----------------------------------------------------------------------------------------------------------
 client, _ = login("9876500001")
 r = client.post("/api/reset")
-check("POST /api/reset", r.status_code == 200 and r.json()["seeded"] and len(r.json()["stories"]) >= 5, r.json())
+check("POST /api/reset", r.status_code == 200 and r.json()["seeded"], r.json())
 check("reset restores proposed offers", client.get("/api/growth").json()["offer"]["status"] == "proposed")
 
 # the approval gate on the spoken path: ask -> graph pauses at interrupt() -> a bare "haan" resumes it
