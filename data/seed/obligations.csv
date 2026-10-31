@@ -1,0 +1,73 @@
+merchant_id,label,amount,due_on,paid
+1,Shop rent,18000,2026-06-01,True
+1,Shop rent,18000,2026-07-01,True
+1,Shop rent,18000,2026-08-01,True
+1,Shop rent,18000,2026-09-01,True
+1,Shop rent,18000,2026-10-01,True
+1,Shop rent,18000,2026-11-01,True
+1,Supplier payment - Sri Balaji Traders,38000,2026-06-10,True
+1,Supplier payment - Sri Balaji Traders,41000,2026-07-22,True
+1,Supplier payment - Sri Balaji Traders,36000,2026-09-05,True
+1,Supplier payment - Sri Balaji Traders,42000,2026-10-12,True
+1,Supplier payment - Sri Balaji Traders,45000,2026-11-19,False
+1,Electricity bill,3200,2026-11-23,False
+1,Shop rent,18000,2026-12-01,False
+2,Shop rent,14000,2026-06-01,True
+2,Shop rent,14000,2026-07-01,True
+2,Shop rent,14000,2026-08-01,True
+2,Shop rent,14000,2026-09-01,True
+2,Shop rent,14000,2026-10-01,True
+2,Shop rent,14000,2026-11-01,True
+2,Supplier payment - Gupta Wholesale,22000,2026-06-14,True
+2,Supplier payment - Gupta Wholesale,24000,2026-08-03,True
+2,Supplier payment - Gupta Wholesale,21000,2026-10-02,True
+2,Supplier payment - Gupta Wholesale,20000,2026-11-21,False
+2,Shop rent,14000,2026-12-01,False
+3,Shop rent,32000,2026-10-01,True
+3,Shop rent,32000,2026-09-01,True
+3,Shop rent,32000,2026-08-01,True
+3,Shop rent,32000,2026-07-01,True
+3,Shop rent,32000,2026-06-01,True
+3,Shop rent,32000,2026-05-01,True
+3,Supplier payment - Apollo Distributors,63000,2026-07-10,True
+3,Supplier payment - Apollo Distributors,66500,2026-08-24,True
+3,Supplier payment - Apollo Distributors,70000,2026-10-05,True
+3,Supplier payment - Apollo Distributors,70000,2026-11-24,False
+3,Electricity bill,5800,2026-11-23,False
+3,Shop rent,32000,2026-12-01,False
+4,Shop rent,9000,2026-10-01,True
+4,Shop rent,9000,2026-09-01,True
+4,Shop rent,9000,2026-08-01,True
+4,Shop rent,9000,2026-07-01,True
+4,Shop rent,9000,2026-06-01,True
+4,Shop rent,9000,2026-05-01,True
+4,Supplier payment - Lakshmi Dairy,23400,2026-07-10,True
+4,Supplier payment - Lakshmi Dairy,24700,2026-08-24,True
+4,Supplier payment - Lakshmi Dairy,26000,2026-10-05,True
+4,Supplier payment - Lakshmi Dairy,26000,2026-11-20,False
+4,Electricity bill,1600,2026-11-23,False
+4,Shop rent,9000,2026-12-01,False
+5,Shop rent,45000,2026-10-01,True
+5,Shop rent,45000,2026-09-01,True
+5,Shop rent,45000,2026-08-01,True
+5,Shop rent,45000,2026-07-01,True
+5,Shop rent,45000,2026-06-01,True
+5,Shop rent,45000,2026-05-01,True
+5,Supplier payment - Salon Supplies Co,27000,2026-07-10,True
+5,Supplier payment - Salon Supplies Co,28500,2026-08-24,True
+5,Supplier payment - Salon Supplies Co,30000,2026-10-05,True
+5,Supplier payment - Salon Supplies Co,30000,2026-11-22,False
+5,Electricity bill,8100,2026-11-23,False
+5,Shop rent,45000,2026-12-01,False
+6,Shop rent,12000,2026-10-01,True
+6,Shop rent,12000,2026-09-01,True
+6,Shop rent,12000,2026-08-01,True
+6,Shop rent,12000,2026-07-01,True
+6,Shop rent,12000,2026-06-01,True
+6,Shop rent,12000,2026-05-01,True
+6,Supplier payment - Mehdipatnam Market Traders,30600,2026-07-10,True
+6,Supplier payment - Mehdipatnam Market Traders,32300,2026-08-24,True
+6,Supplier payment - Mehdipatnam Market Traders,34000,2026-10-05,True
+6,Supplier payment - Mehdipatnam Market Traders,34000,2026-11-18,False
+6,Electricity bill,2200,2026-11-23,False
+6,Shop rent,12000,2026-12-01,False

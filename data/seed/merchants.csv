@@ -1,0 +1,7 @@
+id,name,category,city,phone,language,onboarded_on
+1,Lakshmi Kirana,Grocery store,"Kukatpally, Hyderabad",9876500001,te-IN,2025-10-24
+2,Sharma Provision Store,Grocery store,"Karol Bagh, Delhi",9876500002,hi-IN,2025-10-24
+3,Sai Ram Medicals,Pharmacy,"Andheri West, Mumbai",9876500003,hi-IN,2025-07-30
+4,Venkat Tiffins & Tea,Tea and tiffin stall,Secunderabad,9876500004,te-IN,2025-10-08
+5,Glow Unisex Salon,Salon,"Indiranagar, Bengaluru",9876500005,en-IN,2025-07-30
+6,Raju Fresh Vegetables,Fruit and vegetable stall,"Mehdipatnam, Hyderabad",9876500006,te-IN,2025-10-08
