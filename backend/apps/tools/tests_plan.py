@@ -3,8 +3,9 @@ from django.test import TestCase, override_settings
 
 from apps.agents.tests import LAKSHMI, OFFLINE, SHARMA, login
 from apps.core import seeding
+from apps.core.models import Obligation
 from apps.tools import plan_data
-from apps.tools.plan import expansion_plan, stock_plan
+from apps.tools.plan import expansion_plan, payback_estimate, stock_plan
 
 
 @override_settings(READONLY_ALIAS="default", **OFFLINE)
@@ -92,3 +93,47 @@ class PlanTests(TestCase):
         self.assertEqual(client.get("/api/plan/stock?language=xx").json()["category_label"], "కిరాణా దుకాణం")  # unknown: the saved language
         from rest_framework.test import APIClient
         self.assertEqual(APIClient().get("/api/plan/stock").status_code, 401)
+
+    # --- payback estimate for the new-branch suggestion ---------------------------------------------------------------
+    def test_payback_maths_for_a_known_input(self):
+        # spend 225,000 with no shop yet, grocery margin 22%, rent 18,000:
+        #   sales 135,000, profit 29,700 - 18,000 = 11,700 (shown as 11,500), setup 54,000 + 45,000 + 100,000 = 199,000 (200,000)
+        e = payback_estimate(225000, 0, 0.22, 18000)
+        self.assertEqual(e["expected_monthly_sales"], 135000)
+        self.assertEqual(e["expected_monthly_profit"], 11500)
+        self.assertEqual(e["setup_cost"], 200000)
+        self.assertEqual(e["payback_months"], 17.4)
+        self.assertEqual(e["verdict"], "recommended")
+        self.assertTrue(e["can_request"])
+        self.assertEqual(payback_estimate(400000, 1, 0.22, 18000)["verdict"], "slow")  # about 23 months: shown, but no action
+
+    def test_a_loss_is_not_recommended_and_has_no_payback(self):
+        e = payback_estimate(225000, 0, 0.10, 18000)  # the first-draft grocery margin: profit is below zero after rent
+        self.assertLess(e["expected_monthly_profit"], 0)
+        self.assertIsNone(e["payback_months"])
+        self.assertEqual(e["verdict"], "not_recommended")
+        self.assertFalse(e["can_request"])
+
+    def test_estimates_are_added_without_moving_the_ranking(self):
+        top = expansion_plan(1)["top"]
+        self.assertEqual([t["rank"] for t in top], [1, 2, 3])
+        self.assertEqual([t["spend"] for t in top], [225000, 400000, 545000])  # the order and figures shown before
+        self.assertEqual([t["shops"] for t in top], [0, 1, 2])
+        self.assertEqual([t["distance_m"] for t in top], [2100, 1600, 1400])
+        for t in top:
+            self.assertEqual(t["payback_months"], round(t["setup_cost"] / t["expected_monthly_profit"], 1))
+
+    def test_numbers_are_sane_for_lakshmi_and_venkat(self):
+        for merchant_id in (1, 4):
+            for t in expansion_plan(merchant_id)["top"]:
+                self.assertIsNotNone(t["payback_months"], (merchant_id, t))
+                self.assertTrue(3 <= t["payback_months"] <= 36, (merchant_id, t["payback_months"]))
+        self.assertTrue(any(t["can_request"] for t in expansion_plan(1)["top"]))  # Lakshmi has an area worth requesting for
+
+    def test_rent_comes_from_the_merchants_own_obligations_else_the_default(self):
+        own = expansion_plan(1)["assumptions"]
+        self.assertEqual((own["rent"], own["rent_source"]), (18000, "own"))
+        Obligation.objects.filter(merchant_id=1, label="Shop rent").delete()
+        fallback = expansion_plan(1)["assumptions"]
+        self.assertEqual((fallback["rent"], fallback["rent_source"]), (15000, "assumed"))
+

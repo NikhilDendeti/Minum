@@ -3,7 +3,8 @@ import { useMunim } from "../hooks/useMunim";
 import { api } from "../lib/api";
 import { fmt, inr, shortDate, weekdayName } from "../lib/i18n";
 import type { Lang, PlanExpansion, PlanStock } from "../types";
-import { Notice, SimulatedTag, Skeleton } from "./ui";
+import { SummaryList } from "./ConfirmDialog";
+import { Dialog, Disclosure, Icon, Notice, SimulatedTag, Skeleton, StatusLabel } from "./ui";
 
 /**
  * Two planning cards under the Grow screen: what to stock for the next 3 days, and where a second shop could do well.
@@ -181,56 +182,147 @@ const distance = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${
 function ExpansionCard({ lang }: { lang: Lang }) {
   const { t } = useMunim();
   const { data, error } = useLoad<PlanExpansion>(() => api.planExpansion(lang), [lang]);
-  const title = t.planMapTitle;
+  // The request is a demo action: it lives here only and writes nothing to the server.
+  const [requested, setRequested] = useState<Record<number, boolean>>({});
+  const [asking, setAsking] = useState<number | null>(null);
+  const [howOpen, setHowOpen] = useState(false);
 
   if (data && !data.available) return null;
+  const chosen = data?.top?.find((a) => a.rank === asking);
+  const as = data?.assumptions;
+
   return (
-    <CardShell id="plan-map-h" title={title} sub={data ? fmt(t.planMapSub, { category: data.category_label ?? "" }) : ""}>
+    <CardShell id="plan-map-h" title={t.planMapTitle} sub={t.planRankNote}>
       {!data || !data.cells || !data.top || !data.grid ? (
         error ? <Notice tone="risk">{t.planLoadFailed}</Notice> : <Loading />
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:items-start">
-          <div
-            role="img"
-            aria-label={t.planMapAlt}
-            className="grid gap-1"
-            style={{ gridTemplateColumns: `repeat(${data.grid}, minmax(0, 1fr))` }}
-          >
-            {(() => {
-              const max = Math.max(...data.cells.filter((c) => !c.you).map((c) => c.score), 1);
-              return data.cells.map((c) => (
-                <div
-                  key={`${c.row}-${c.col}`}
-                  className={`flex aspect-square items-center justify-center rounded text-[12px] font-semibold ${c.you ? "border-2 border-navy bg-surface text-navy" : "text-navy"}`}
-                  style={c.you ? undefined : { backgroundColor: `color-mix(in srgb, var(--brand) ${Math.round(8 + 55 * (c.score / max))}%, transparent)` }}
-                >
-                  {c.you ? t.planYou : c.rank > 0 ? <span className="flex h-6 w-6 items-center justify-center rounded-full bg-navy text-white">{c.rank}</span> : null}
+        <>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:items-start">
+            <div
+              role="img"
+              aria-label={t.planMapAlt}
+              className="grid gap-1"
+              style={{ gridTemplateColumns: `repeat(${data.grid}, minmax(0, 1fr))` }}
+            >
+              {(() => {
+                const max = Math.max(...data.cells.filter((c) => !c.you).map((c) => c.score), 1);
+                return data.cells.map((c) => (
+                  <div
+                    key={`${c.row}-${c.col}`}
+                    className={`flex aspect-square items-center justify-center rounded text-[12px] font-semibold ${c.you ? "border-2 border-navy bg-surface text-navy" : "text-navy"}`}
+                    style={c.you ? undefined : { backgroundColor: `color-mix(in srgb, var(--brand) ${Math.round(8 + 55 * (c.score / max))}%, transparent)` }}
+                  >
+                    {c.you ? t.planYou : c.rank > 0 ? <span className="flex h-6 w-6 items-center justify-center rounded-full bg-navy text-white">{c.rank}</span> : null}
+                  </div>
+                ));
+              })()}
+            </div>
+
+            <div>
+              <p className="meta">{fmt(t.planYourSales, { amount: inr(data.monthly_sales ?? 0) })}</p>
+              <ol className="mt-3 space-y-4">
+                {data.top.map((a) => (
+                  <li key={a.rank} className="flex gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-[13px] font-semibold text-white" aria-hidden>
+                      {a.rank}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        <span className="sr-only">{fmt(t.planRank, { n: a.rank })}. </span>
+                        {fmt(t.planAreaLine, { distance: distance(a.distance_m), direction: a.direction })}
+                      </p>
+                      <p className="meta">{fmt(t.planAreaSpend, { amount: inr(a.spend), category: data.category_label ?? "", shops: a.shops })}</p>
+                      {a.payback_months != null ? (
+                        <p className="mt-1 text-[14px]">
+                          {fmt(t.planEstimate, {
+                            sales: inr(a.expected_monthly_sales ?? 0),
+                            profit: inr(a.expected_monthly_profit ?? 0),
+                            months: a.payback_months,
+                            setup: inr(a.setup_cost ?? 0),
+                          })}
+                        </p>
+                      ) : a.expected_monthly_sales != null ? (
+                        <p className="mt-1 text-[14px] text-risk-fg">{fmt(t.planEstimateLoss, { sales: inr(a.expected_monthly_sales) })}</p>
+                      ) : null}
+                      {a.can_request &&
+                        (requested[a.rank] ? (
+                          <div className="mt-2">
+                            <StatusLabel tone="ok">{t.planRequested}</StatusLabel>
+                          </div>
+                        ) : (
+                          <button className="btn-secondary mt-2" onClick={() => setAsking(a.rank)}>
+                            {t.planRequestCredit}
+                          </button>
+                        ))}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              {as && (
+                <div className="mt-4">
+                  <button className="btn-quiet -ml-3 min-h-[44px] py-1 text-[14px]" aria-expanded={howOpen} aria-controls="plan-how" onClick={() => setHowOpen((o) => !o)}>
+                    <Icon name="chevron" className={`h-4 w-4 transition-transform duration-200 ${howOpen ? "rotate-180" : ""}`} />
+                    {t.planHow}
+                  </button>
+                  <Disclosure open={howOpen} id="plan-how">
+                    <ul className="space-y-1.5 rounded-ctl bg-canvas p-3 text-[14px]">
+                      <li>{fmt(t.planHowSales, { factor: as.new_shop_factor })}</li>
+                      <li>
+                        {fmt(t.planHowProfit, {
+                          margin: Math.round(as.margin * 100),
+                          rent: inr(as.rent),
+                          source: as.rent_source === "own" ? t.planRentOwn : t.planRentAssumed,
+                        })}
+                      </li>
+                      <li>{fmt(t.planHowSetup, { months: as.deposit_months, days: as.opening_stock_days, fitout: inr(as.fitout) })}</li>
+                      <li>{t.planHowPayback}</li>
+                      <li className="meta">{t.planHowNote}</li>
+                    </ul>
+                  </Disclosure>
                 </div>
-              ));
-            })()}
+              )}
+              <p className="meta mt-4">{data.note}</p>
+            </div>
           </div>
 
-          <div>
-            <p className="meta">{fmt(t.planYourSales, { amount: inr(data.monthly_sales ?? 0) })}</p>
-            <ol className="mt-3 space-y-3">
-              {data.top.map((a) => (
-                <li key={a.rank} className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy text-[13px] font-semibold text-white" aria-hidden>
-                    {a.rank}
-                  </span>
-                  <div>
-                    <p className="font-medium">
-                      <span className="sr-only">{fmt(t.planRank, { n: a.rank })}. </span>
-                      {fmt(t.planAreaLine, { distance: distance(a.distance_m), direction: a.direction })}
-                    </p>
-                    <p className="meta">{fmt(t.planAreaSpend, { amount: inr(a.spend), category: data.category_label ?? "", shops: a.shops })}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <p className="meta mt-4">{data.note}</p>
-          </div>
-        </div>
+          {chosen && (
+            <Dialog
+              title={t.planDlgTitle}
+              onClose={() => setAsking(null)}
+              footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button className="btn-secondary" onClick={() => setAsking(null)}>
+                    {t.cancel}
+                  </button>
+                  <button
+                    className="btn-primary"
+                    data-autofocus
+                    onClick={() => {
+                      setRequested((r) => ({ ...r, [chosen.rank]: true }));
+                      setAsking(null);
+                    }}
+                  >
+                    {t.planDlgConfirm}
+                  </button>
+                </div>
+              }
+            >
+              <SummaryList
+                rows={[
+                  { label: t.planDlgArea, value: fmt(t.planAreaLine, { distance: distance(chosen.distance_m), direction: chosen.direction }) },
+                  { label: t.planDlgSetup, value: inr(chosen.setup_cost ?? 0) },
+                  { label: t.planDlgPayback, value: fmt(t.planDlgMonths, { months: chosen.payback_months ?? 0 }) },
+                ]}
+              />
+              <p className="meta mt-3">{t.planDlgNothing}</p>
+              <div className="mt-2 flex items-start gap-2">
+                <SimulatedTag />
+                <p className="meta">{t.planDlgDemo}</p>
+              </div>
+            </Dialog>
+          )}
+        </>
       )}
     </CardShell>
   );

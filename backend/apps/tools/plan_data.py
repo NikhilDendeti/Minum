@@ -142,3 +142,18 @@ LOCATIONS = {
     5: (12.9719, 77.6412),  # Indiranagar, Bengaluru
     6: (17.3950, 78.4400),  # Mehdipatnam, Hyderabad
 }
+
+
+# --- new-branch economics: EVERY value below is an assumption for the demo, shown to the merchant under "How we estimate this" ---
+NEW_SHOP_FACTOR = 0.6  # a new shop does not win a full share of an area's spend on day one
+# Share of sales left after stock and running costs, before rent. Assumed per shop type. The first draft used 0.10, 0.15,
+# 0.25 and 0.40 (grocery, pharmacy, tea, salon); at those values every grocery area lost money after rent, so they were raised.
+MARGIN = {"grocery": 0.22, "pharmacy": 0.20, "tea": 0.35, "salon": 0.40, "produce": 0.18, "pooja": 0.20}
+DEFAULT_RENT = 15000  # Rs a month, used only when a merchant has no "Shop rent" obligation
+DEPOSIT_MONTHS = 3  # months of rent paid up front as a deposit
+OPENING_STOCK_DAYS = 10  # days of expected sales held as opening stock
+FITOUT = 100000  # Rs for shelves, signage and electrics
+SALES_ROUND = 500  # displayed sales and profit are rounded to this
+SETUP_ROUND = 5000  # displayed setup cost is rounded to this
+MAX_PAYBACK_MONTHS = 18  # an area at or under this offers the "Request expansion credit" action
+

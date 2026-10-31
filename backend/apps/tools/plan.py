@@ -16,7 +16,7 @@ from django.conf import settings
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
 
-from apps.core.models import Merchant, Transaction
+from apps.core.models import Merchant, Obligation, Transaction
 
 from . import plan_data as D
 from .util import jsonable, logged
@@ -64,6 +64,40 @@ def _weekday_sales(merchant_id, today):
         by_weekday[d.weekday()].append(daily.get(d, 0.0))
     typical = sum(sum(v) for v in by_weekday.values()) / (7 * LOOKBACK_WEEKS)
     return typical, {wd: sum(v) / len(v) for wd, v in by_weekday.items()}
+
+
+def _round_to(x, step):
+    return int(step * math.floor(x / step + 0.5))
+
+
+def payback_estimate(spend, shops, margin, rent):
+    """What a new shop in an area might earn, and how long it takes to pay back. Pure arithmetic on assumed constants.
+
+    sales   = spend / (shops + 1) x NEW_SHOP_FACTOR
+    profit  = sales x margin - rent
+    setup   = DEPOSIT_MONTHS x rent + OPENING_STOCK_DAYS of sales + FITOUT
+    payback = setup / profit, in months (None when profit is not above zero)
+    Sales and profit are rounded to Rs 500 and setup to Rs 5,000, and payback is worked out from the rounded figures,
+    so anyone can check the displayed numbers against each other.
+    """
+    sales_raw = spend / (shops + 1) * D.NEW_SHOP_FACTOR
+    profit_raw = sales_raw * margin - rent
+    setup_raw = D.DEPOSIT_MONTHS * rent + sales_raw / 30 * D.OPENING_STOCK_DAYS + D.FITOUT
+    sales, profit = _round_to(sales_raw, D.SALES_ROUND), _round_to(profit_raw, D.SALES_ROUND)
+    setup = _round_to(setup_raw, D.SETUP_ROUND)
+    if profit <= 0:
+        return {"expected_monthly_sales": sales, "expected_monthly_profit": profit, "setup_cost": setup,
+                "payback_months": None, "verdict": "not_recommended", "can_request": False}
+    months = round(setup / profit, 1)
+    return {"expected_monthly_sales": sales, "expected_monthly_profit": profit, "setup_cost": setup,
+            "payback_months": months, "verdict": "recommended" if months <= D.MAX_PAYBACK_MONTHS else "slow",
+            "can_request": months <= D.MAX_PAYBACK_MONTHS}
+
+
+def _shop_rent(merchant_id):
+    """The merchant's own recurring shop rent, used as a stand-in for a comparable shop's rent; (amount, source)."""
+    row = Obligation.objects.filter(merchant_id=merchant_id, label="Shop rent").order_by("-due_on").first()
+    return (float(row.amount), "own") if row else (float(D.DEFAULT_RENT), "assumed")
 
 
 def _categories(lang):
@@ -167,8 +201,15 @@ def expansion_plan(merchant_id, today=None, category=None, language=None):
         top.append({"rank": rank, "row": cell["row"], "col": cell["col"], "spend": cell["spend"], "shops": cell["shops"],
                     "distance_m": int(round(math.hypot(dx, dy) * CELL_M / 100) * 100),
                     "direction": D.DIRECTIONS[int(round(bearing / 45)) % 8][lang]})
+    rent, rent_source = _shop_rent(merchant_id)
+    margin = D.MARGIN[key]
+    for area in top:  # additive: the ranking and every existing field above are untouched
+        area.update(payback_estimate(area["spend"], area["shops"], margin, rent))
+    assumptions = {"new_shop_factor": D.NEW_SHOP_FACTOR, "margin": margin, "rent": round(rent), "rent_source": rent_source,
+                   "deposit_months": D.DEPOSIT_MONTHS, "opening_stock_days": D.OPENING_STOCK_DAYS, "fitout": D.FITOUT,
+                   "max_payback_months": D.MAX_PAYBACK_MONTHS}
     return jsonable({
         "available": True, "category": key, "category_label": D.CATEGORY_LABELS[key][lang], "categories": _categories(lang),
         "grid": GRID, "cell_m": CELL_M, "monthly_sales": round(monthly), "cells": cells, "top": top,
-        "simulated": True, "note": note,
+        "assumptions": assumptions, "simulated": True, "note": note,
     })

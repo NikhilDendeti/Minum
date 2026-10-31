@@ -149,7 +149,31 @@ export interface PlanExpansion {
   cell_m?: number;
   monthly_sales?: number;
   cells?: { row: number; col: number; spend: number; shops: number; score: number; you: boolean; rank: number }[];
-  top?: { rank: number; row: number; col: number; spend: number; shops: number; distance_m: number; direction: string }[];
+  top?: {
+    rank: number;
+    row: number;
+    col: number;
+    spend: number;
+    shops: number;
+    distance_m: number;
+    direction: string;
+    expected_monthly_sales?: number;
+    expected_monthly_profit?: number;
+    setup_cost?: number;
+    payback_months?: number | null;
+    verdict?: "recommended" | "slow" | "not_recommended";
+    can_request?: boolean;
+  }[];
+  assumptions?: {
+    new_shop_factor: number;
+    margin: number;
+    rent: number;
+    rent_source: "own" | "assumed";
+    deposit_months: number;
+    opening_stock_days: number;
+    fitout: number;
+    max_payback_months: number;
+  };
   simulated: boolean;
   note: string;
 }
